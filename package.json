@@ -18,5 +18,10 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "@eslint/eslintrc": "^3"
+  },
+    "homepage": "https://victorcas30.github.io/victorcas30.github.io-dentalsaas-",
+  "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   }
 }

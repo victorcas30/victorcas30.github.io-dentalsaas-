@@ -37,8 +37,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build Next.js
+      - name: Build Next.js for production
         run: npm run build
+        env:
+          NODE_ENV: production
+          GITHUB_PAGES: true
+          NEXT_PUBLIC_API_URL: https://backenddentalsaas-production.up.railway.app/dental_saas/api/v1
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

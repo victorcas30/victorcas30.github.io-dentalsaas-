@@ -1,0 +1,204 @@
+
+/* =================================== */
+/* HORIZONTAL LAYOUT STYLES */
+/* =================================== */
+
+/* Horizontal Layout */
+.left-sidebar.with-horizontal {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  border-bottom: 1px solid #ebf1f6;
+  box-shadow: none;
+  z-index: 100;
+}
+
+.left-sidebar.with-horizontal .sidebar-nav {
+  height: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0;
+}
+
+.left-sidebar.with-horizontal #sidebarnav {
+  display: flex;
+  flex-direction: row;
+  padding: 0 20px;
+  gap: 5px;
+}
+
+.left-sidebar.with-horizontal .sidebar-item {
+  margin-bottom: 0;
+}
+
+.left-sidebar.with-horizontal .sidebar-link {
+  white-space: nowrap;
+  padding: 15px 20px;
+  border-radius: 0;
+  border-bottom: 3px solid transparent;
+}
+
+.left-sidebar.with-horizontal .sidebar-link:hover {
+  background-color: transparent;
+  border-bottom-color: var(--dental-primary);
+  color: var(--dental-primary);
+}
+
+.left-sidebar.with-horizontal .sidebar-link.active {
+  background-color: transparent;
+  border-bottom-color: var(--dental-primary);
+  color: var(--dental-primary);
+}
+
+.left-sidebar.with-horizontal .sidebar-link i {
+  font-size: 18px;
+}
+
+/* Dropdown en menú horizontal */
+.left-sidebar.with-horizontal .sidebar-item.dropdown-hover {
+  position: relative;
+}
+
+.left-sidebar.with-horizontal .dropdown-menu-wrapper {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  padding-top: 5px;
+}
+
+.left-sidebar.with-horizontal .sidebar-item.dropdown-hover .dropdown-menu {
+  min-width: 280px;
+  display: block;
+  position: relative;
+  margin: 0;
+  padding: 8px 0;
+  border: 1px solid #ebf1f6;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  animation: slideDown 0.2s ease;
+  list-style: none;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.left-sidebar.with-horizontal .sidebar-item.dropdown-hover .dropdown-item {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  color: #768B9E;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.left-sidebar.with-horizontal .sidebar-item.dropdown-hover .dropdown-item:hover {
+  background-color: #f8f9fa;
+  color: var(--dental-primary);
+  padding-left: 25px;
+}
+
+.left-sidebar.with-horizontal .sidebar-item.dropdown-hover .dropdown-item.active {
+  background-color: rgba(27, 132, 255, 0.1);
+  color: var(--dental-primary);
+  font-weight: 600;
+}
+
+/* Page Wrapper para Horizontal */
+.page-wrapper-horizontal {
+  width: 100%;
+  margin-left: 0;
+}
+
+/* Header con horizontal */
+.app-header.with-horizontal {
+  background: linear-gradient(135deg, var(--dental-primary) 0%, var(--dental-secondary) 100%);
+  position: sticky;
+  top: 0;
+  z-index: 101;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.app-header.with-horizontal .navbar {
+  padding: 12px 0;
+}
+
+.app-header.with-horizontal .navbar-brand h4 {
+  font-size: 20px;
+}
+
+/* Responsive Horizontal */
+@media (max-width: 1199px) {
+  .left-sidebar.with-horizontal #sidebarnav {
+    gap: 0;
+  }
+
+  .left-sidebar.with-horizontal .sidebar-link {
+    padding: 12px 15px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 991px) {
+  .left-sidebar.with-horizontal {
+    display: none;
+  }
+}
+
+/* Offcanvas para móvil */
+.offcanvas {
+  max-width: 280px;
+}
+
+.offcanvas-header {
+  padding: 20px;
+  border-bottom: 1px solid #ebf1f6;
+}
+
+.offcanvas-body .nav-link {
+  color: var(--dental-dark);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  margin-bottom: 5px;
+}
+
+.offcanvas-body .nav-link:hover {
+  background-color: #f8f9fa;
+  color: var(--dental-primary);
+}
+
+.offcanvas-body .nav-link i {
+  font-size: 20px;
+  width: 24px;
+}
+
+/* Dropdown menu animations */
+.dropdown-menu-animate-up {
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

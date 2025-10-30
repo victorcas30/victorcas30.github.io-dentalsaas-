@@ -1,0 +1,590 @@
+/* Importar Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Variables CSS personalizadas para DentalSaaS */
+:root {
+  --dental-primary: #1B84FF;
+  --dental-secondary: #43CED7;
+  --dental-success: #2cd07e;
+  --dental-danger: #F8285A;
+  --dental-warning: #F6C000;
+  --dental-info: #2cabe3;
+  --dental-light: #f2f4f8;
+  --dental-dark: #3A4752;
+}
+
+/* Configuración global */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f5f7fa;
+  color: #768B9E;
+}
+
+/* Main Wrapper */
+#main-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Layout Horizontal */
+#main-wrapper[data-layout="horizontal"] {
+  display: block;
+}
+
+/* Sidebar Styles */
+.left-sidebar {
+  width: 270px;
+  background: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+/* Mini Sidebar - Desktop */
+.mini-sidebar .left-sidebar {
+  width: 80px;
+}
+
+.mini-sidebar .left-sidebar .hide-menu {
+  display: none;
+}
+
+.mini-sidebar .left-sidebar .brand-logo h4 {
+  display: none;
+}
+
+.mini-sidebar .left-sidebar .user-profile {
+  padding: 15px 10px;
+}
+
+.mini-sidebar .left-sidebar .profile-text,
+.mini-sidebar .left-sidebar .nav-small-cap span {
+  display: none;
+}
+
+.mini-sidebar .left-sidebar .sidebar-link {
+  justify-content: center;
+  padding: 12px;
+}
+
+.mini-sidebar .left-sidebar .sidebar-link i {
+  margin-right: 0;
+}
+
+/* Sidebar en móvil */
+@media (max-width: 991px) {
+  .left-sidebar {
+    left: -270px;
+  }
+
+  .left-sidebar.show-sidebar {
+    left: 0;
+  }
+}
+
+.brand-logo {
+  padding: 15px 20px;
+  border-bottom: 1px solid #ebf1f6;
+}
+
+.sidebar-nav {
+  height: calc(100vh - 140px);
+  overflow-y: auto;
+  padding: 0 15px;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background-color: #d3d8de;
+  border-radius: 10px;
+}
+
+#sidebarnav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-small-cap {
+  padding: 20px 15px 10px;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+  color: #768B9E;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-item {
+  margin-bottom: 5px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  color: #768B9E;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-link i {
+  font-size: 20px;
+  margin-right: 12px;
+  width: 24px;
+  text-align: center;
+}
+
+.sidebar-link:hover {
+  background-color: #EDF5FD;
+  color: var(--dental-primary);
+}
+
+.sidebar-link.active {
+  background-color: var(--dental-primary);
+  color: white;
+}
+
+.user-profile {
+  padding: 25px 20px;
+  text-align: center;
+  border-radius: 0 0 12px 12px;
+  margin: 15px;
+}
+
+.profile-img {
+  margin-bottom: 10px;
+}
+
+.profile-img img {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.profile-text {
+  color: white;
+}
+
+/* Page Wrapper */
+.page-wrapper {
+  margin-left: 270px;
+  width: calc(100% - 270px);
+  transition: all 0.3s ease;
+}
+
+.mini-sidebar .page-wrapper {
+  margin-left: 80px;
+  width: calc(100% - 80px);
+}
+
+/* En móvil, sin margen */
+@media (max-width: 991px) {
+  .page-wrapper {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* Header/Topbar */
+.topbar {
+  background: var(--dental-primary);
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+
+.navbar {
+  padding: 15px 25px;
+}
+
+.nav-link {
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-icon-hover {
+  font-size: 20px;
+}
+
+/* Body Wrapper */
+.body-wrapper {
+  padding: 25px;
+  min-height: calc(100vh - 70px);
+}
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  border: none;
+  margin-bottom: 25px;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.card-body {
+  padding: 25px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dental-dark);
+  margin-bottom: 15px;
+}
+
+/* Badges */
+.badge {
+  padding: 6px 12px;
+  font-weight: 500;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+.bg-success-subtle {
+  background-color: rgba(44, 208, 126, 0.1);
+  color: var(--dental-success);
+}
+
+.bg-warning-subtle {
+  background-color: rgba(246, 192, 0, 0.1);
+  color: var(--dental-warning);
+}
+
+.bg-info-subtle {
+  background-color: rgba(44, 171, 227, 0.1);
+  color: var(--dental-info);
+}
+
+.bg-primary-subtle {
+  background-color: rgba(27, 132, 255, 0.1);
+  color: var(--dental-primary);
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--dental-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1670d9;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(27, 132, 255, 0.3);
+}
+
+.btn-light-primary {
+  background-color: rgba(27, 132, 255, 0.1);
+  color: var(--dental-primary);
+}
+
+.btn-light-primary:hover {
+  background-color: rgba(27, 132, 255, 0.2);
+}
+
+.btn-outline-primary {
+  border: 2px solid var(--dental-primary);
+  color: var(--dental-primary);
+  background: transparent;
+}
+
+.btn-outline-primary:hover {
+  background: var(--dental-primary);
+  color: white;
+}
+
+.btn-outline-success {
+  border: 2px solid var(--dental-success);
+  color: var(--dental-success);
+  background: transparent;
+}
+
+.btn-outline-success:hover {
+  background: var(--dental-success);
+  color: white;
+}
+
+.btn-outline-info {
+  border: 2px solid var(--dental-info);
+  color: var(--dental-info);
+  background: transparent;
+}
+
+.btn-outline-info:hover {
+  background: var(--dental-info);
+  color: white;
+}
+
+/* Tables */
+.table {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.table thead th {
+  border-bottom: 2px solid #ebf1f6;
+  padding: 15px 12px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--dental-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table tbody td {
+  padding: 15px 12px;
+  border-bottom: 1px solid #ebf1f6;
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f8f9fa;
+  cursor: pointer;
+}
+
+.table-responsive {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Alerts */
+.alert {
+  border-radius: 8px;
+  border: none;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.alert-warning {
+  background-color: rgba(246, 192, 0, 0.1);
+  color: #c99700;
+}
+
+.alert-info {
+  background-color: rgba(44, 171, 227, 0.1);
+  color: #2389b6;
+}
+
+.alert-success {
+  background-color: rgba(44, 208, 126, 0.1);
+  color: #23a665;
+}
+
+/* Dropdown */
+.dropdown-menu {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  padding: 10px 0;
+  margin-top: 8px;
+}
+
+.dropdown-item {
+  padding: 10px 20px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+  color: var(--dental-primary);
+}
+
+.dropdown-divider {
+  margin: 8px 0;
+  border-color: #ebf1f6;
+}
+
+/* Dark overlay for mobile sidebar */
+.dark-transparent {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+  .body-wrapper {
+    padding: 15px;
+  }
+
+  .card-body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 767px) {
+  .topbar .navbar {
+    padding: 15px;
+  }
+
+  .body-wrapper {
+    padding: 10px;
+  }
+
+  .card-body {
+    padding: 15px;
+  }
+}
+
+/* Utilidades adicionales */
+.rounded-circle {
+  border-radius: 50% !important;
+}
+
+.fw-semibold {
+  font-weight: 600;
+}
+
+.fw-bold {
+  font-weight: 700;
+}
+
+.text-muted {
+  color: #768B9E !important;
+}
+
+.text-primary {
+  color: var(--dental-primary) !important;
+}
+
+.text-success {
+  color: var(--dental-success) !important;
+}
+
+.text-warning {
+  color: var(--dental-warning) !important;
+}
+
+.text-danger {
+  color: var(--dental-danger) !important;
+}
+
+.text-info {
+  color: var(--dental-info) !important;
+}
+
+.bg-primary {
+  background-color: var(--dental-primary) !important;
+}
+
+.bg-success {
+  background-color: var(--dental-success) !important;
+}
+
+.bg-warning {
+  background-color: var(--dental-warning) !important;
+}
+
+.bg-danger {
+  background-color: var(--dental-danger) !important;
+}
+
+.bg-info {
+  background-color: var(--dental-info) !important;
+}
+
+/* Animaciones suaves */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.card {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Dark Mode Support */
+[data-bs-theme="dark"] {
+  background-color: #192838;
+  color: #7c8fac;
+}
+
+[data-bs-theme="dark"] .card {
+  background-color: #152332;
+  color: #eaeff4;
+}
+
+[data-bs-theme="dark"] .left-sidebar {
+  background-color: #152332;
+  box-shadow: none;
+}
+
+[data-bs-theme="dark"] .sidebar-link {
+  color: #7c8fac;
+}
+
+[data-bs-theme="dark"] .sidebar-link:hover {
+  background-color: rgba(27, 132, 255, 0.1);
+  color: var(--dental-primary);
+}
+
+[data-bs-theme="dark"] .table thead th,
+[data-bs-theme="dark"] .table tbody td {
+  border-color: #333f55;
+  color: #eaeff4;
+}
+
+[data-bs-theme="dark"] .table-hover tbody tr:hover {
+  background-color: #1a2632;
+}
+
+[data-bs-theme="dark"] body {
+  background-color: #192838;
+}

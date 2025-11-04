@@ -49,6 +49,35 @@ export const rutasService = {
     }
   },
 
+  // Listar rutas homepage
+  async listarHomepage() {
+    try {
+      const token = authService.getToken()
+      
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await apiFetch('rutas/homepage', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        const error = await parsearErrorAPI(response)
+        throw error
+      }
+
+      const result = await response.json()
+      return result.data || []
+    } catch (error) {
+      console.error('Error en listarHomepage:', error)
+      throw error
+    }
+  },
+
   // Obtener ruta por ID
   async obtenerPorId(id) {
     try {
@@ -92,7 +121,7 @@ export const rutasService = {
         path: datosRuta.path,
         descripcion: datosRuta.descripcion || '',
         id_modulo: datosRuta.id_modulo,
-        activo: String(datosRuta.activo),
+        activo: datosRuta.activo ? '1' : '0',
         es_homepage: Boolean(datosRuta.es_homepage)
       }
 
@@ -134,7 +163,7 @@ export const rutasService = {
         path: datosRuta.path,
         descripcion: datosRuta.descripcion || '',
         id_modulo: datosRuta.id_modulo,
-        activo: String(datosRuta.activo),
+        activo: datosRuta.activo ? '1' : '0',
         es_homepage: Boolean(datosRuta.es_homepage)
       }
 

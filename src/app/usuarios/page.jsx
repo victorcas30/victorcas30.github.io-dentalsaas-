@@ -5,6 +5,7 @@ import HorizontalLayout from '@/components/layout/HorizontalLayout'
 import ConfirmModal from '@/components/ConfirmModal'
 import { usuariosService } from '@/services/usuariosService'
 import { rolesService } from '@/services/rolesService'
+import { rutasService } from '@/services/rutasService'
 import { mostrarErrorAPI, mostrarExito } from '@/utils/sweetAlertHelper'
 import { authService } from '@/services/authService'
 
@@ -39,6 +40,7 @@ export default function Usuarios() {
     descripcion: '',
     default_home: 1
   })
+  const [rutasHomepage, setRutasHomepage] = useState([])
 
   // Estados de confirmación
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
@@ -51,6 +53,7 @@ export default function Usuarios() {
   useEffect(() => {
     cargarUsuarios()
     cargarRoles()
+    cargarRutasHomepage()
   }, [])
 
   // ==================== USUARIOS ====================
@@ -188,6 +191,16 @@ export default function Usuarios() {
     }
   }
 
+  const cargarRutasHomepage = async () => {
+    try {
+      const data = await rutasService.listarHomepage()
+      setRutasHomepage(data)
+    } catch (err) {
+      console.error('Error al cargar rutas homepage:', err)
+      await mostrarErrorAPI(err)
+    }
+  }
+
   const handleInputChangeRol = (e) => {
     const { name, value } = e.target
     
@@ -209,7 +222,7 @@ export default function Usuarios() {
     setFormDataRol({
       nombre: '',
       descripcion: '',
-      default_home: 1
+      default_home: rutasHomepage.length > 0 ? rutasHomepage[0].id_ruta : 1
     })
     setRolSeleccionado(null)
     setShowModalRol(true)
@@ -288,6 +301,11 @@ export default function Usuarios() {
       'bg-danger', 'bg-info', 'bg-success', 'bg-warning', 'bg-secondary', 'bg-primary'
     ]
     return colores[idRol % colores.length] || 'bg-secondary'
+  }
+
+  const getRutaNombre = (idRuta) => {
+    const ruta = rutasHomepage.find(r => r.id_ruta === idRuta)
+    return ruta ? `${ruta.nombre} (${ruta.path})` : `Vista ${idRuta}`
   }
 
   return (
@@ -442,7 +460,7 @@ export default function Usuarios() {
                           <td className="text-muted">{rol.descripcion}</td>
                           <td>
                             <span className="badge bg-info">
-                              {rol.default_home === 1 ? 'Dashboard' : `Módulo ${rol.default_home}`}
+                              {getRutaNombre(rol.default_home)}
                             </span>
                           </td>
                           <td className="text-end">
@@ -586,10 +604,15 @@ export default function Usuarios() {
                       onChange={handleInputChangeRol} 
                       required
                     >
-                      <option value="1">Dashboard</option>
-                      <option value="2">Módulo 2</option>
-                      <option value="3">Módulo 3</option>
-                      <option value="4">Módulo 4</option>
+                      {rutasHomepage.length > 0 ? (
+                        rutasHomepage.map(ruta => (
+                          <option key={ruta.id_ruta} value={ruta.id_ruta}>
+                            {ruta.nombre} ({ruta.path})
+                          </option>
+                        ))
+                      ) : (
+                        <option value="1">Dashboard</option>
+                      )}
                     </select>
                     <small className="text-muted">Página que verá el usuario al iniciar sesión</small>
                   </div>

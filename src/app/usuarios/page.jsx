@@ -6,6 +6,7 @@ import ConfirmModal from '@/components/ConfirmModal'
 import { usuariosService } from '@/services/usuariosService'
 import { rolesService } from '@/services/rolesService'
 import { mostrarErrorAPI, mostrarExito } from '@/utils/sweetAlertHelper'
+import { authService } from '@/services/authService'
 
 export default function Usuarios() {
   // Estado de pestañas
@@ -23,6 +24,7 @@ export default function Usuarios() {
     telefono: '',
     password: '',
     id_rol: 2,
+    id_clinica: null,
     activo: 1
   })
 
@@ -88,6 +90,7 @@ export default function Usuarios() {
   }
 
   const abrirModalCrearUsuario = () => {
+    const usuarioActual = authService.getCurrentUser()
     setModalModeUsuario('crear')
     setFormDataUsuario({
       nombre: '',
@@ -95,6 +98,7 @@ export default function Usuarios() {
       telefono: '',
       password: '',
       id_rol: roles.length > 0 ? roles[0].id_rol : 2,
+      id_clinica: usuarioActual?.id_clinica || null,
       activo: 1
     })
     setUsuarioSeleccionado(null)
@@ -109,7 +113,8 @@ export default function Usuarios() {
       telefono: usuario.telefono || '',
       password: '',
       id_rol: usuario.id_rol,
-      activo: usuario.activo === null ? 1 : usuario.activo
+      id_clinica: usuario.id_clinica,
+      activo: usuario.activo ? 1 : 0
     })
     setUsuarioSeleccionado(usuario)
     setShowModalUsuario(true)

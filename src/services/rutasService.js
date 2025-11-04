@@ -92,7 +92,8 @@ export const rutasService = {
         path: datosRuta.path,
         descripcion: datosRuta.descripcion || '',
         id_modulo: datosRuta.id_modulo,
-        activo: String(datosRuta.activo) // ⚠️ Convertir a string
+        activo: String(datosRuta.activo),
+        es_homepage: Boolean(datosRuta.es_homepage)
       }
 
       console.log('📤 Enviando datos de ruta:', body)
@@ -133,7 +134,8 @@ export const rutasService = {
         path: datosRuta.path,
         descripcion: datosRuta.descripcion || '',
         id_modulo: datosRuta.id_modulo,
-        activo: String(datosRuta.activo) // ⚠️ Convertir a string
+        activo: String(datosRuta.activo),
+        es_homepage: Boolean(datosRuta.es_homepage)
       }
 
       console.log('📤 Actualizando ruta:', id, body)

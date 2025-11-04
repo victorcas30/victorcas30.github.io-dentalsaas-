@@ -16,7 +16,8 @@ export default function Modulos() {
   const [moduloSeleccionado, setModuloSeleccionado] = useState(null)
   const [formDataModulo, setFormDataModulo] = useState({
     nombre: '',
-    descripcion: ''
+    descripcion: '',
+    activo: 1
   })
 
   // Estados para Rutas
@@ -31,7 +32,8 @@ export default function Modulos() {
     path: '',
     descripcion: '',
     id_modulo: null,
-    activo: 1
+    activo: 1,
+    es_homepage: 0
   })
 
   // Estados de confirmación
@@ -63,18 +65,27 @@ export default function Modulos() {
   }
 
   const handleInputChangeModulo = (e) => {
-    const { name, value } = e.target
-    setFormDataModulo({
-      ...formDataModulo,
-      [name]: value
-    })
+    const { name, value, type, checked } = e.target
+    
+    if (name === 'activo') {
+      setFormDataModulo({
+        ...formDataModulo,
+        [name]: checked ? 1 : 0
+      })
+    } else {
+      setFormDataModulo({
+        ...formDataModulo,
+        [name]: value
+      })
+    }
   }
 
   const abrirModalCrearModulo = () => {
     setModalModeModulo('crear')
     setFormDataModulo({
       nombre: '',
-      descripcion: ''
+      descripcion: '',
+      activo: 1
     })
     setModuloSeleccionado(null)
     setShowModalModulo(true)
@@ -84,7 +95,8 @@ export default function Modulos() {
     setModalModeModulo('editar')
     setFormDataModulo({
       nombre: modulo.nombre,
-      descripcion: modulo.descripcion || ''
+      descripcion: modulo.descripcion || '',
+      activo: modulo.activo ? 1 : 0
     })
     setModuloSeleccionado(modulo)
     setShowModalModulo(true)
@@ -163,7 +175,7 @@ export default function Modulos() {
   const handleInputChangeRuta = (e) => {
     const { name, value, type, checked } = e.target
     
-    if (name === 'activo') {
+    if (name === 'activo' || name === 'es_homepage') {
       setFormDataRuta({
         ...formDataRuta,
         [name]: checked ? 1 : 0
@@ -183,7 +195,8 @@ export default function Modulos() {
       path: '',
       descripcion: '',
       id_modulo: moduloRutasSeleccionado.id_modulo,
-      activo: 1
+      activo: 1,
+      es_homepage: 0
     })
     setRutaSeleccionada(null)
     setShowModalRuta(true)
@@ -196,7 +209,8 @@ export default function Modulos() {
       path: ruta.path,
       descripcion: ruta.descripcion || '',
       id_modulo: ruta.id_modulo,
-      activo: ruta.activo === "1" ? 1 : 0
+      activo: ruta.activo === "1" ? 1 : 0,
+      es_homepage: ruta.es_homepage ? 1 : 0
     })
     setRutaSeleccionada(ruta)
     setShowModalRuta(true)
@@ -364,6 +378,9 @@ export default function Modulos() {
                               <h5 className="fw-bold mb-0">{modulo.nombre}</h5>
                             </div>
                           </div>
+                          <span className={`badge ${modulo.activo ? 'bg-success' : 'bg-danger'}`}>
+                            {modulo.activo ? 'Activo' : 'Inactivo'}
+                          </span>
                         </div>
                         
                         <p className="text-muted mb-3" style={{minHeight: '60px'}}>
@@ -431,6 +448,7 @@ export default function Modulos() {
                       <th>Path</th>
                       <th>Descripción</th>
                       <th>Estado</th>
+                      <th>Homepage</th>
                       <th className="text-end">Acciones</th>
                     </tr>
                   </thead>
@@ -456,6 +474,15 @@ export default function Modulos() {
                           <span className={`badge ${ruta.activo === "1" ? 'bg-success' : 'bg-danger'}`}>
                             {ruta.activo === "1" ? 'Activo' : 'Inactivo'}
                           </span>
+                        </td>
+                        <td>
+                          {ruta.es_homepage ? (
+                            <span className="badge bg-warning text-dark">
+                              <i className="ti ti-home me-1"></i>Sí
+                            </span>
+                          ) : (
+                            <span className="badge bg-light text-muted">No</span>
+                          )}
                         </td>
                         <td className="text-end">
                           <button 
@@ -542,6 +569,16 @@ export default function Modulos() {
                       placeholder="Describe la funcionalidad de este módulo..."
                     ></textarea>
                   </div>
+                  <div className="form-check form-switch">
+                    <input 
+                      className="form-check-input" 
+                      type="checkbox" 
+                      name="activo" 
+                      checked={formDataModulo.activo === 1} 
+                      onChange={handleInputChangeModulo} 
+                    />
+                    <label className="form-check-label">Módulo Activo</label>
+                  </div>
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={cerrarModalModulo}>
@@ -618,7 +655,7 @@ export default function Modulos() {
                       placeholder="Describe la funcionalidad de esta ruta..."
                     ></textarea>
                   </div>
-                  <div className="form-check form-switch">
+                  <div className="form-check form-switch mb-2">
                     <input 
                       className="form-check-input" 
                       type="checkbox" 
@@ -627,6 +664,16 @@ export default function Modulos() {
                       onChange={handleInputChangeRuta} 
                     />
                     <label className="form-check-label">Ruta Activa</label>
+                  </div>
+                  <div className="form-check form-switch">
+                    <input 
+                      className="form-check-input" 
+                      type="checkbox" 
+                      name="es_homepage" 
+                      checked={formDataRuta.es_homepage === 1} 
+                      onChange={handleInputChangeRuta} 
+                    />
+                    <label className="form-check-label">Es página de inicio (Homepage)</label>
                   </div>
                 </div>
                 <div className="modal-footer">

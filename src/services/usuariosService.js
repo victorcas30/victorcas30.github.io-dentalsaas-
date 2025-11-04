@@ -97,7 +97,7 @@ export const usuariosService = {
         email: datosUsuario.email,
         password: datosUsuario.password,
         telefono: datosUsuario.telefono || '',
-        activo: String(datosUsuario.activo) // ⚠️ Convertir a string
+        activo: datosUsuario.activo ? '1' : '0'
       }
 
       console.log('📤 Enviando datos de usuario:', body)
@@ -139,7 +139,8 @@ export const usuariosService = {
         email: datosUsuario.email,
         telefono: datosUsuario.telefono || '',
         id_rol: datosUsuario.id_rol,
-        activo: String(datosUsuario.activo) // ⚠️ Convertir a string
+        id_clinica: datosUsuario.id_clinica,
+        activo: datosUsuario.activo ? '1' : '0'
       }
 
       // Solo incluir password si se proporcionó

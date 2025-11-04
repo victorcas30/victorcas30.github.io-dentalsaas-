@@ -89,7 +89,8 @@ export const modulosService = {
 
       const body = {
         nombre: datosModulo.nombre,
-        descripcion: datosModulo.descripcion || ''
+        descripcion: datosModulo.descripcion || '',
+        activo: Boolean(datosModulo.activo)
       }
 
       console.log('📤 Enviando datos de módulo:', body)
@@ -127,7 +128,8 @@ export const modulosService = {
 
       const body = {
         nombre: datosModulo.nombre,
-        descripcion: datosModulo.descripcion || ''
+        descripcion: datosModulo.descripcion || '',
+        activo: Boolean(datosModulo.activo)
       }
 
       console.log('📤 Actualizando módulo:', id, body)

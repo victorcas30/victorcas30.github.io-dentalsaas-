@@ -8,6 +8,16 @@ import { pacientesService } from '@/services/pacientesService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI, mostrarExito } from '@/utils/sweetAlertHelper'
 
+// Esta función es requerida para output: export
+export function generateStaticParams() {
+  // Retornar array vacío permite que la ruta sea generada dinámicamente en el cliente
+  return []
+}
+
+// Marcar la ruta como dinámica
+export const dynamic = 'force-static'
+export const dynamicParams = true
+
 export default function DetallePaciente() {
   const router = useRouter()
   const params = useParams()
@@ -96,7 +106,6 @@ export default function DetallePaciente() {
   }
 
   const abrirModalEditar = () => {
-    // Formatear fecha para input date (YYYY-MM-DD)
     const fechaNacimiento = paciente.fecha_nacimiento ? paciente.fecha_nacimiento.split('T')[0] : ''
     
     setFormData({
@@ -114,7 +123,6 @@ export default function DetallePaciente() {
       es_paciente: paciente.es_paciente,
       consiente_tratamiento_datos: paciente.consiente_tratamiento_datos
     })
-    // Obtener IDs de etiquetas asignadas
     const etiquetasAsignadas = paciente.etiquetas?.filter(e => e.asignada).map(e => e.id_etiqueta) || []
     setEtiquetasSeleccionadas(etiquetasAsignadas)
     setShowModalEditar(true)
@@ -139,20 +147,16 @@ export default function DetallePaciente() {
     setLoadingAction(true)
 
     try {
-      // Actualizar datos del paciente
       await pacientesService.actualizar(idPaciente, idClinica, formData)
       
-      // Gestionar etiquetas (asignar/desasignar según cambios)
       const etiquetasPacienteService = await import('@/services/etiquetasPacienteService').then(m => m.etiquetasPacienteService)
       const etiquetasOriginales = paciente.etiquetas?.filter(e => e.asignada).map(e => e.id_etiqueta) || []
       
-      // Etiquetas a agregar
       const etiquetasAgregar = etiquetasSeleccionadas.filter(id => !etiquetasOriginales.includes(id))
       for (const idEtiqueta of etiquetasAgregar) {
         await etiquetasPacienteService.asignar(idPaciente, idEtiqueta, idClinica)
       }
       
-      // Etiquetas a remover
       const etiquetasRemover = etiquetasOriginales.filter(id => !etiquetasSeleccionadas.includes(id))
       for (const idEtiqueta of etiquetasRemover) {
         await etiquetasPacienteService.desasignar(idPaciente, idEtiqueta, idClinica)

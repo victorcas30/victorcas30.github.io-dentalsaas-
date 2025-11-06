@@ -17,10 +17,10 @@ export default function HorizontalSidebar() {
   }, [])
 
   return (
-    <div style={{
+    <div className="d-none d-xl-block" style={{
       position: 'sticky',
       top: 0,
-      zIndex: 100,
+      zIndex: 90,
       background: 'white',
       borderBottom: '1px solid #ebf1f6',
       boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
@@ -163,7 +163,7 @@ export default function HorizontalSidebar() {
                 boxShadow: '0 5px 20px rgba(0,0,0,0.15)',
                 minWidth: '280px',
                 padding: '8px 0',
-                zIndex: 9999,
+                zIndex: 50,
                 marginTop: '0px',
                 animation: 'fadeIn 0.2s ease'
               }}>

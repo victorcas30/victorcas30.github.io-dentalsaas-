@@ -185,9 +185,9 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
               <h4 className="fw-bold text-white m-0">DentalSaaS</h4>
             </Link>
 
-            {/* Mobile Toggle */}
+            {/* Mobile Toggle - Solo visible en móvil */}
             <button
-              className="navbar-toggler border-0 p-0"
+              className="navbar-toggler border-0 p-0 d-xl-none"
               type="button"
               data-bs-toggle="offcanvas"
               data-bs-target="#mobilenavbar"
@@ -197,8 +197,8 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
               <i className="ti ti-menu-2 text-white fs-7"></i>
             </button>
 
-            {/* Horizontal Menu - Desktop */}
-            <div className="collapse navbar-collapse justify-content-between" id="navbarNav">
+            {/* Horizontal Menu - Solo visible en desktop */}
+            <div className="collapse navbar-collapse justify-content-between d-none d-xl-flex" id="navbarNav">
               
               {/* Menu Items - se cargarán desde HorizontalSidebar */}
               <div></div>
@@ -206,14 +206,14 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
               {/* Right Side Icons */}
               <ul className="navbar-nav flex-row ms-auto align-items-center">
                 
-                {/* Búsqueda */}
-                <li className="nav-item d-none d-lg-block">
+                {/* Búsqueda - Desktop */}
+                <li className="nav-item">
                   <a className="nav-link text-white" href="#" data-bs-toggle="modal">
                     <i className="ti ti-search fs-6"></i>
                   </a>
                 </li>
 
-                {/* Dark Mode Toggle */}
+                {/* Dark Mode Toggle - Desktop */}
                 <li className="nav-item">
                   <a 
                     className="nav-link text-white" 
@@ -224,8 +224,8 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
                   </a>
                 </li>
 
-                {/* Notificaciones */}
-                <li className="nav-item dropdown d-none d-lg-block">
+                {/* Notificaciones - Desktop */}
+                <li className="nav-item dropdown">
                   <a 
                     className="nav-link text-white position-relative" 
                     href="#" 
@@ -238,7 +238,7 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
                       <span className="visually-hidden">notificaciones</span>
                     </span>
                   </a>
-                  <div className="dropdown-menu dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="notificationDropdown">
+                  <div className="dropdown-menu dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="notificationDropdown" style={{zIndex: 100}}>
                     <div className="p-3 border-bottom">
                       <h6 className="mb-0">Notificaciones</h6>
                     </div>
@@ -256,8 +256,8 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
                   </div>
                 </li>
 
-                {/* Mensajes */}
-                <li className="nav-item dropdown d-none d-lg-block">
+                {/* Mensajes - Desktop */}
+                <li className="nav-item dropdown">
                   <a 
                     className="nav-link text-white position-relative" 
                     href="#" 
@@ -270,7 +270,7 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
                       <span className="visually-hidden">mensajes</span>
                     </span>
                   </a>
-                  <div className="dropdown-menu dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="messageDropdown">
+                  <div className="dropdown-menu dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="messageDropdown" style={{zIndex: 100}}>
                     <div className="p-3 border-bottom">
                       <h6 className="mb-0">Mensajes</h6>
                     </div>
@@ -288,7 +288,7 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
                   </div>
                 </li>
 
-                {/* Perfil de Usuario */}
+                {/* Perfil de Usuario - Desktop */}
                 <li className="nav-item dropdown">
                   <a 
                     className="nav-link text-white pe-0" 
@@ -297,7 +297,9 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
                     data-bs-toggle="dropdown"
                     style={{
                       cursor: loggingOut ? 'not-allowed' : 'pointer',
-                      opacity: loggingOut ? 0.6 : 1
+                      opacity: loggingOut ? 0.6 : 1,
+                      position: 'relative',
+                      zIndex: 1050
                     }}
                   >
                     <div className="d-flex align-items-center gap-2">
@@ -331,7 +333,7 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
                       <i className="ti ti-chevron-down fs-4 d-none d-xl-block"></i>
                     </div>
                   </a>
-                  <div className="dropdown-menu dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="userDropdown">
+                  <div className="dropdown-menu dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="userDropdown" style={{zIndex: 9999}}>
                     <div className="p-3 border-bottom">
                       <h6 className="mb-0">{usuario?.nombre || 'Usuario'}</h6>
                       <span className="text-muted small">{usuario?.email || 'email@ejemplo.com'}</span>

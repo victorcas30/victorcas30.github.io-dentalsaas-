@@ -152,6 +152,12 @@ export const authService = {
     return []
   },
 
+  // Obtener ID de la clínica del usuario actual
+  getClinicaId() {
+    const usuario = this.getCurrentUser()
+    return usuario?.id_clinica || null
+  },
+
   // Verificar si está autenticado
   isAuthenticated() {
     return !!this.getToken()

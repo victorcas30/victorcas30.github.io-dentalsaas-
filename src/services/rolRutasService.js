@@ -30,7 +30,7 @@ export const rolRutasService = {
       }
 
       const body = {
-        activo: String(activo), // "0" o "1"
+        activo: Boolean(activo),
         rol_ruta: [idRol, idRuta]
       }
 

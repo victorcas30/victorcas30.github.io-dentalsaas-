@@ -75,7 +75,7 @@ export default function Permisos() {
         ...modulo,
         rutas: modulo.rutas.map(ruta => 
           ruta.id_ruta === idRuta 
-            ? { ...ruta, activa: activo === 1 ? "1" : "0" }
+            ? { ...ruta, activa: activo === 1 }
             : ruta
         )
       }))
@@ -98,7 +98,7 @@ export default function Permisos() {
     try {
       setGuardando(true)
       
-      const rutasActivas = modulo.rutas.filter(r => r.activo === "1")
+      const rutasActivas = modulo.rutas.filter(r => r.activo === true)
       
       for (const ruta of rutasActivas) {
         await rolRutasService.toggleRutaRol(
@@ -114,8 +114,8 @@ export default function Permisos() {
           ? {
               ...m,
               rutas: m.rutas.map(ruta => 
-                ruta.activo === "1"
-                  ? { ...ruta, activa: seleccionar ? "1" : "0" }
+                ruta.activo === true
+                  ? { ...ruta, activa: seleccionar }
                   : ruta
               )
             }
@@ -137,21 +137,21 @@ export default function Permisos() {
   }
 
   const todasLasRutasDelModuloAsignadas = (modulo) => {
-    const rutasActivas = modulo.rutas.filter(r => r.activo === "1")
+    const rutasActivas = modulo.rutas.filter(r => r.activo === true)
     if (rutasActivas.length === 0) return false
-    return rutasActivas.every(ruta => ruta.activa === "1")
+    return rutasActivas.every(ruta => ruta.activa === true)
   }
 
   const algunaRutaDelModuloAsignada = (modulo) => {
-    return modulo.rutas.some(ruta => ruta.activa === "1")
+    return modulo.rutas.some(ruta => ruta.activa === true)
   }
 
   const contarRutasAsignadas = (modulo) => {
-    return modulo.rutas.filter(r => r.activa === "1").length
+    return modulo.rutas.filter(r => r.activa === true).length
   }
 
   const contarRutasActivas = (modulo) => {
-    return modulo.rutas.filter(r => r.activo === "1").length
+    return modulo.rutas.filter(r => r.activo === true).length
   }
 
   return (
@@ -296,8 +296,8 @@ export default function Permisos() {
                           ) : (
                             <div className="row g-2">
                               {modulo.rutas.map((ruta) => {
-                                const estaAsignada = ruta.activa === "1"
-                                const estaActiva = ruta.activo === "1"
+                                const estaAsignada = ruta.activa === true
+                                const estaActiva = ruta.activo === true
                                 
                                 return (
                                   <div key={ruta.id_ruta} className="col-md-6">

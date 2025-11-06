@@ -42,7 +42,13 @@ export const rutasService = {
       }
 
       const result = await response.json()
-      return result.data || []
+      const rutas = result.data || []
+      // Convertir activo y es_homepage a booleanos
+      return rutas.map(ruta => ({
+        ...ruta,
+        activo: Boolean(ruta.activo === 1 || ruta.activo === '1' || ruta.activo === true),
+        es_homepage: Boolean(ruta.es_homepage === 1 || ruta.es_homepage === '1' || ruta.es_homepage === true)
+      }))
     } catch (error) {
       console.error('Error en listarPorModulo:', error)
       throw error
@@ -71,7 +77,13 @@ export const rutasService = {
       }
 
       const result = await response.json()
-      return result.data || []
+      const rutas = result.data || []
+      // Convertir activo y es_homepage a booleanos
+      return rutas.map(ruta => ({
+        ...ruta,
+        activo: Boolean(ruta.activo === 1 || ruta.activo === '1' || ruta.activo === true),
+        es_homepage: Boolean(ruta.es_homepage === 1 || ruta.es_homepage === '1' || ruta.es_homepage === true)
+      }))
     } catch (error) {
       console.error('Error en listarHomepage:', error)
       throw error
@@ -100,7 +112,16 @@ export const rutasService = {
       }
 
       const result = await response.json()
-      return result.data
+      const ruta = result.data
+      // Convertir activo y es_homepage a booleanos
+      if (ruta) {
+        return {
+          ...ruta,
+          activo: Boolean(ruta.activo === 1 || ruta.activo === '1' || ruta.activo === true),
+          es_homepage: Boolean(ruta.es_homepage === 1 || ruta.es_homepage === '1' || ruta.es_homepage === true)
+        }
+      }
+      return ruta
     } catch (error) {
       console.error('Error en obtenerPorId:', error)
       throw error
@@ -121,7 +142,7 @@ export const rutasService = {
         path: datosRuta.path,
         descripcion: datosRuta.descripcion || '',
         id_modulo: datosRuta.id_modulo,
-        activo: datosRuta.activo ? '1' : '0',
+        activo: Boolean(datosRuta.activo),
         es_homepage: Boolean(datosRuta.es_homepage)
       }
 
@@ -163,7 +184,7 @@ export const rutasService = {
         path: datosRuta.path,
         descripcion: datosRuta.descripcion || '',
         id_modulo: datosRuta.id_modulo,
-        activo: datosRuta.activo ? '1' : '0',
+        activo: Boolean(datosRuta.activo),
         es_homepage: Boolean(datosRuta.es_homepage)
       }
 

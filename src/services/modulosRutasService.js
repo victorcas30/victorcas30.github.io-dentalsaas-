@@ -45,7 +45,17 @@ export const modulosRutasService = {
 
       const result = await response.json()
       console.log('✅ Módulos-rutas obtenidos:', result)
-      return result.data || []
+      const modulos = result.data || []
+      
+      // Normalizar los campos activo y activa a booleanos
+      return modulos.map(modulo => ({
+        ...modulo,
+        rutas: modulo.rutas?.map(ruta => ({
+          ...ruta,
+          activo: Boolean(ruta.activo === 1 || ruta.activo === '1' || ruta.activo === true),
+          activa: Boolean(ruta.activa === 1 || ruta.activa === '1' || ruta.activa === true)
+        })) || []
+      }))
     } catch (error) {
       console.error('Error en obtenerModulosConRutasPorRol:', error)
       throw error

@@ -209,7 +209,7 @@ export default function Modulos() {
       path: ruta.path,
       descripcion: ruta.descripcion || '',
       id_modulo: ruta.id_modulo,
-      activo: ruta.activo === "1" ? 1 : 0,
+      activo: ruta.activo ? 1 : 0,
       es_homepage: ruta.es_homepage ? 1 : 0
     })
     setRutaSeleccionada(ruta)
@@ -471,8 +471,8 @@ export default function Modulos() {
                           {ruta.descripcion || '-'}
                         </td>
                         <td>
-                          <span className={`badge ${ruta.activo === "1" ? 'bg-success' : 'bg-danger'}`}>
-                            {ruta.activo === "1" ? 'Activo' : 'Inactivo'}
+                          <span className={`badge ${ruta.activo ? 'bg-success' : 'bg-danger'}`}>
+                            {ruta.activo ? 'Activo' : 'Inactivo'}
                           </span>
                         </td>
                         <td>

@@ -109,6 +109,7 @@ export default function Pacientes() {
 
   const abrirModalEditar = (paciente) => {
     setModalMode('editar')
+    // Formatear fecha para input date (YYYY-MM-DD)
     const fechaNacimiento = paciente.fecha_nacimiento ? paciente.fecha_nacimiento.split('T')[0] : ''
     
     setFormData({
@@ -367,329 +368,197 @@ export default function Pacientes() {
         </div>
       </div>
 
-      {/* Modal Crear/Editar Paciente - Mejorado con iconos */}
+      {/* Modal Crear/Editar Paciente */}
       {showModal && (
         <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
           <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div className="modal-content">
-              <div className="modal-header bg-primary">
-                <h5 className="modal-title text-white">
-                  <i className={`ti ti-${modalMode === 'crear' ? 'user-plus' : 'user-edit'} me-2`}></i>
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className={`ti ti-${modalMode === 'crear' ? 'plus' : 'edit'} me-2`}></i>
                   {modalMode === 'crear' ? 'Nuevo Paciente' : 'Editar Paciente'}
                 </h5>
-                <button type="button" className="btn-close btn-close-white" onClick={cerrarModal}></button>
+                <button type="button" className="btn-close" onClick={cerrarModal}></button>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="modal-body">
-                  {/* Sección: Información Personal */}
-                  <h5 className="fs-4 fw-semibold mb-4 text-primary">
-                    <i className="ti ti-user-circle me-2"></i>Información Personal
-                  </h5>
-                  
-                  <div className="row g-3 mb-4">
+                  <div className="row g-3">
                     <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        <i className="ti ti-user me-2"></i>Nombres <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-group border rounded-1">
-                        <span className="input-group-text bg-transparent border-0">
-                          <i className="ti ti-user fs-6"></i>
-                        </span>
-                        <input 
-                          type="text" 
-                          className="form-control border-0 ps-2" 
-                          name="nombres" 
-                          value={formData.nombres} 
-                          onChange={handleInputChange} 
-                          placeholder="Juan Carlos"
-                          required 
-                        />
-                      </div>
+                      <label className="form-label">Nombres <span className="text-danger">*</span></label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="nombres" 
+                        value={formData.nombres} 
+                        onChange={handleInputChange} 
+                        required 
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Apellidos <span className="text-danger">*</span></label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="apellidos" 
+                        value={formData.apellidos} 
+                        onChange={handleInputChange} 
+                        required 
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Sexo <span className="text-danger">*</span></label>
+                      <select 
+                        className="form-select" 
+                        name="sexo" 
+                        value={formData.sexo} 
+                        onChange={handleInputChange} 
+                        required
+                      >
+                        <option value="M">Masculino</option>
+                        <option value="F">Femenino</option>
+                      </select>
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Fecha de Nacimiento <span className="text-danger">*</span></label>
+                      <input 
+                        type="date" 
+                        className="form-control" 
+                        name="fecha_nacimiento" 
+                        value={formData.fecha_nacimiento} 
+                        onChange={handleInputChange} 
+                        required 
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">DUI</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="dui" 
+                        value={formData.dui} 
+                        onChange={handleInputChange} 
+                        placeholder="12345678-9"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Celular/WhatsApp <span className="text-danger">*</span></label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="celular_whatsapp" 
+                        value={formData.celular_whatsapp} 
+                        onChange={handleInputChange} 
+                        required 
+                        placeholder="7890-1234"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Teléfono Secundario</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="telefono_secundario" 
+                        value={formData.telefono_secundario} 
+                        onChange={handleInputChange} 
+                        placeholder="2234-5678"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Email</label>
+                      <input 
+                        type="email" 
+                        className="form-control" 
+                        name="email" 
+                        value={formData.email} 
+                        onChange={handleInputChange} 
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Dirección</label>
+                      <textarea 
+                        className="form-control" 
+                        name="direccion" 
+                        value={formData.direccion} 
+                        onChange={handleInputChange} 
+                        rows="2"
+                      ></textarea>
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Nombre Contacto Emergencia</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="nombre_contacto" 
+                        value={formData.nombre_contacto} 
+                        onChange={handleInputChange} 
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Teléfono Contacto Emergencia</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="telefono_contacto" 
+                        value={formData.telefono_contacto} 
+                        onChange={handleInputChange} 
+                      />
                     </div>
                     
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        <i className="ti ti-user me-2"></i>Apellidos <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-group border rounded-1">
-                        <span className="input-group-text bg-transparent border-0">
-                          <i className="ti ti-user fs-6"></i>
-                        </span>
-                        <input 
-                          type="text" 
-                          className="form-control border-0 ps-2" 
-                          name="apellidos" 
-                          value={formData.apellidos} 
-                          onChange={handleInputChange} 
-                          placeholder="García López"
-                          required 
-                        />
+                    {modalMode === 'crear' && (
+                      <div className="col-12">
+                        <label className="form-label">Etiquetas</label>
+                        <div className="d-flex flex-wrap gap-2">
+                          {etiquetas.map(etiqueta => {
+                            const seleccionada = formData.etiquetas?.includes(etiqueta.id_etiqueta)
+                            return (
+                              <button
+                                key={etiqueta.id_etiqueta}
+                                type="button"
+                                className={`btn btn-sm ${seleccionada ? '' : 'btn-outline-secondary'}`}
+                                style={seleccionada ? {
+                                  backgroundColor: etiqueta.color,
+                                  borderColor: etiqueta.color,
+                                  color: '#fff'
+                                } : {}}
+                                onClick={() => handleEtiquetaToggle(etiqueta.id_etiqueta)}
+                              >
+                                {etiqueta.nombre}
+                              </button>
+                            )
+                          })}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        <i className="ti ti-gender-bigender me-2"></i>Sexo <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-group border rounded-1">
-                        <span className="input-group-text bg-transparent border-0">
-                          <i className="ti ti-gender-bigender fs-6"></i>
-                        </span>
-                        <select 
-                          className="form-select border-0 ps-2" 
-                          name="sexo" 
-                          value={formData.sexo} 
-                          onChange={handleInputChange} 
-                          required
-                        >
-                          <option value="M">Masculino</option>
-                          <option value="F">Femenino</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        <i className="ti ti-calendar me-2"></i>Fecha de Nacimiento <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-group border rounded-1">
-                        <span className="input-group-text bg-transparent border-0">
-                          <i className="ti ti-calendar fs-6"></i>
-                        </span>
-                        <input 
-                          type="date" 
-                          className="form-control border-0 ps-2" 
-                          name="fecha_nacimiento" 
-                          value={formData.fecha_nacimiento} 
-                          onChange={handleInputChange} 
-                          required 
-                        />
-                      </div>
-                    </div>
-
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        <i className="ti ti-id me-2"></i>DUI
-                      </label>
-                      <div className="input-group border rounded-1">
-                        <span className="input-group-text bg-transparent border-0">
-                          <i className="ti ti-id fs-6"></i>
-                        </span>
-                        <input 
-                          type="text" 
-                          className="form-control border-0 ps-2" 
-                          name="dui" 
-                          value={formData.dui} 
-                          onChange={handleInputChange} 
-                          placeholder="12345678-9"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sección: Información de Contacto */}
-                  <h5 className="fs-4 fw-semibold mb-4 mt-4 text-primary border-top pt-4">
-                    <i className="ti ti-phone me-2"></i>Información de Contacto
-                  </h5>
-
-                  <div className="row g-3 mb-4">
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        <i className="ti ti-brand-whatsapp me-2"></i>Celular/WhatsApp <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-group border rounded-1">
-                        <span className="input-group-text bg-transparent border-0">
-                          <i className="ti ti-brand-whatsapp fs-6 text-success"></i>
-                        </span>
-                        <input 
-                          type="text" 
-                          className="form-control border-0 ps-2" 
-                          name="celular_whatsapp" 
-                          value={formData.celular_whatsapp} 
-                          onChange={handleInputChange} 
-                          required 
-                          placeholder="7890-1234"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        <i className="ti ti-phone me-2"></i>Teléfono Secundario
-                      </label>
-                      <div className="input-group border rounded-1">
-                        <span className="input-group-text bg-transparent border-0">
-                          <i className="ti ti-phone fs-6"></i>
-                        </span>
-                        <input 
-                          type="text" 
-                          className="form-control border-0 ps-2" 
-                          name="telefono_secundario" 
-                          value={formData.telefono_secundario} 
-                          onChange={handleInputChange} 
-                          placeholder="2234-5678"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        <i className="ti ti-mail me-2"></i>Email
-                      </label>
-                      <div className="input-group border rounded-1">
-                        <span className="input-group-text bg-transparent border-0">
-                          <i className="ti ti-mail fs-6"></i>
-                        </span>
-                        <input 
-                          type="email" 
-                          className="form-control border-0 ps-2" 
-                          name="email" 
-                          value={formData.email} 
-                          onChange={handleInputChange} 
-                          placeholder="correo@ejemplo.com"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="col-md-12">
-                      <label className="form-label fw-semibold">
-                        <i className="ti ti-map-pin me-2"></i>Dirección
-                      </label>
-                      <div className="input-group border rounded-1">
-                        <span className="input-group-text bg-transparent border-0 align-items-start pt-2">
-                          <i className="ti ti-map-pin fs-6"></i>
-                        </span>
-                        <textarea 
-                          className="form-control border-0 ps-2" 
-                          name="direccion" 
-                          value={formData.direccion} 
-                          onChange={handleInputChange} 
-                          rows="2"
-                          placeholder="Calle, colonia, ciudad..."
-                        ></textarea>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sección: Contacto de Emergencia */}
-                  <h5 className="fs-4 fw-semibold mb-4 mt-4 text-primary border-top pt-4">
-                    <i className="ti ti-alert-circle me-2"></i>Contacto de Emergencia
-                  </h5>
-
-                  <div className="row g-3 mb-4">
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        <i className="ti ti-user me-2"></i>Nombre del Contacto
-                      </label>
-                      <div className="input-group border rounded-1">
-                        <span className="input-group-text bg-transparent border-0">
-                          <i className="ti ti-user fs-6"></i>
-                        </span>
-                        <input 
-                          type="text" 
-                          className="form-control border-0 ps-2" 
-                          name="nombre_contacto" 
-                          value={formData.nombre_contacto} 
-                          onChange={handleInputChange} 
-                          placeholder="Nombre completo"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        <i className="ti ti-phone me-2"></i>Teléfono de Contacto
-                      </label>
-                      <div className="input-group border rounded-1">
-                        <span className="input-group-text bg-transparent border-0">
-                          <i className="ti ti-phone fs-6"></i>
-                        </span>
-                        <input 
-                          type="text" 
-                          className="form-control border-0 ps-2" 
-                          name="telefono_contacto" 
-                          value={formData.telefono_contacto} 
-                          onChange={handleInputChange} 
-                          placeholder="7890-1234"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Etiquetas (solo en crear) */}
-                  {modalMode === 'crear' && etiquetas.length > 0 && (
-                    <>
-                      <h5 className="fs-4 fw-semibold mb-3 mt-4 text-primary border-top pt-4">
-                        <i className="ti ti-tags me-2"></i>Etiquetas
-                      </h5>
-                      <div className="d-flex flex-wrap gap-2 mb-4">
-                        {etiquetas.map(etiqueta => {
-                          const seleccionada = formData.etiquetas?.includes(etiqueta.id_etiqueta)
-                          return (
-                            <button
-                              key={etiqueta.id_etiqueta}
-                              type="button"
-                              className={`btn btn-sm ${seleccionada ? '' : 'btn-outline-secondary'}`}
-                              style={seleccionada ? {
-                                backgroundColor: etiqueta.color,
-                                borderColor: etiqueta.color,
-                                color: '#fff'
-                              } : {}}
-                              onClick={() => handleEtiquetaToggle(etiqueta.id_etiqueta)}
-                            >
-                              <i className={`ti ti-${seleccionada ? 'check' : 'tag'} me-1`}></i>
-                              {etiqueta.nombre}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </>
-                  )}
-
-                  {/* Permisos y consentimientos */}
-                  <h5 className="fs-4 fw-semibold mb-3 mt-4 text-primary border-top pt-4">
-                    <i className="ti ti-shield-check me-2"></i>Permisos y Consentimientos
-                  </h5>
-
-                  <div className="row g-3">
                     <div className="col-12">
-                      <div className="form-check form-switch d-flex align-items-center ps-0">
+                      <div className="form-check">
                         <input 
-                          className="form-check-input ms-0 me-3" 
+                          className="form-check-input" 
                           type="checkbox" 
                           name="es_paciente" 
                           checked={formData.es_paciente} 
                           onChange={handleInputChange} 
-                          style={{ width: '48px', height: '24px' }}
                         />
-                        <label className="form-check-label">
-                          <i className="ti ti-user-check me-2"></i>
-                          <strong>Es paciente activo</strong>
-                        </label>
+                        <label className="form-check-label">Es paciente</label>
                       </div>
                     </div>
                     <div className="col-12">
-                      <div className="form-check form-switch d-flex align-items-center ps-0">
+                      <div className="form-check">
                         <input 
-                          className="form-check-input ms-0 me-3" 
+                          className="form-check-input" 
                           type="checkbox" 
                           name="consiente_tratamiento_datos" 
                           checked={formData.consiente_tratamiento_datos} 
                           onChange={handleInputChange} 
-                          style={{ width: '48px', height: '24px' }}
                         />
-                        <label className="form-check-label">
-                          <i className="ti ti-file-certificate me-2"></i>
-                          <strong>Consiente tratamiento de datos personales</strong>
-                        </label>
+                        <label className="form-check-label">Consiente tratamiento de datos</label>
                       </div>
                     </div>
                   </div>
                 </div>
-                
-                <div className="modal-footer bg-light">
-                  <button type="button" className="btn btn-outline-secondary" onClick={cerrarModal}>
-                    <i className="ti ti-x me-2"></i>Cancelar
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={cerrarModal}>
+                    Cancelar
                   </button>
                   <button type="submit" className="btn btn-primary" disabled={loadingAction}>
                     {loadingAction ? (
@@ -698,10 +567,7 @@ export default function Pacientes() {
                         Guardando...
                       </>
                     ) : (
-                      <>
-                        <i className={`ti ti-${modalMode === 'crear' ? 'check' : 'device-floppy'} me-2`}></i>
-                        {modalMode === 'crear' ? 'Crear Paciente' : 'Guardar Cambios'}
-                      </>
+                      modalMode === 'crear' ? 'Crear' : 'Guardar'
                     )}
                   </button>
                 </div>

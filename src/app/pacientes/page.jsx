@@ -109,7 +109,6 @@ export default function Pacientes() {
 
   const abrirModalEditar = (paciente) => {
     setModalMode('editar')
-    // Formatear fecha para input date (YYYY-MM-DD)
     const fechaNacimiento = paciente.fecha_nacimiento ? paciente.fecha_nacimiento.split('T')[0] : ''
     
     setFormData({
@@ -186,7 +185,7 @@ export default function Pacientes() {
   }
 
   const verDetalle = (idPaciente) => {
-    router.push(`/pacientes/${idPaciente}`)
+    router.push(`/pacientes/detalle?id=${idPaciente}`)
   }
 
   const pacientesFiltrados = pacientes.filter(paciente => {

@@ -30,13 +30,6 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://backenddentalsaas-production.up.railway.app/dental_saas/api/v1',
   },
   
-  // CRÍTICO: Deshabilitar SSG para rutas dinámicas
-  // Esto evita el error con generateStaticParams en 'use client'
-  experimental: {
-    // Forzar todas las páginas a ser estáticas en build time
-    isrMemoryCacheSize: 0,
-  },
-  
   // Configuración de TypeScript y ESLint
   typescript: {
     ignoreBuildErrors: false,
@@ -45,8 +38,7 @@ const nextConfig = {
     ignoreDuringBuilds: false,
   },
   
-  // NUEVO: Configuración para evitar errores con rutas dinámicas en export
-  // Next.js 15 requiere que todas las páginas sean pre-renderizables
+  // Configuración para evitar errores con rutas dinámicas en export
   skipTrailingSlashRedirect: true,
 };
 

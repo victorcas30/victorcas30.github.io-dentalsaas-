@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import HorizontalLayout from '@/components/layout/HorizontalLayout'
 import ConfirmModal from '@/components/ConfirmModal'
@@ -8,7 +8,7 @@ import { pacientesService } from '@/services/pacientesService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI, mostrarExito } from '@/utils/sweetAlertHelper'
 
-export default function DetallePaciente() {
+function DetallePacienteContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const idPaciente = searchParams.get('id')
@@ -297,5 +297,20 @@ export default function DetallePaciente() {
         </div>
       </div>
     </HorizontalLayout>
+  )
+}
+
+export default function DetallePaciente() {
+  return (
+    <Suspense fallback={
+      <HorizontalLayout>
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary"></div>
+          <p className="mt-3 text-muted">Cargando...</p>
+        </div>
+      </HorizontalLayout>
+    }>
+      <DetallePacienteContent />
+    </Suspense>
   )
 }

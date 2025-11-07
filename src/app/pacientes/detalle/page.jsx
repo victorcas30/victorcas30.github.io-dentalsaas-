@@ -270,9 +270,214 @@ function DetallePacienteContent() {
         </div>
       </div>
 
-      {/* Resto del componente igual... */}
-      {/* Modal Editar, Cards de información, etc. */}
-      
+      {/* Modal Editar Paciente */}
+      {showModalEditar && (
+        <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+          <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className="ti ti-edit me-2"></i>
+                  Editar Paciente
+                </h5>
+                <button type="button" className="btn-close" onClick={cerrarModalEditar}></button>
+              </div>
+              <form onSubmit={handleSubmitEditar}>
+                <div className="modal-body">
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label">Nombres <span className="text-danger">*</span></label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="nombres" 
+                        value={formData.nombres} 
+                        onChange={handleInputChange} 
+                        required 
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Apellidos <span className="text-danger">*</span></label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="apellidos" 
+                        value={formData.apellidos} 
+                        onChange={handleInputChange} 
+                        required 
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Sexo <span className="text-danger">*</span></label>
+                      <select 
+                        className="form-select" 
+                        name="sexo" 
+                        value={formData.sexo} 
+                        onChange={handleInputChange} 
+                        required
+                      >
+                        <option value="M">Masculino</option>
+                        <option value="F">Femenino</option>
+                      </select>
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Fecha de Nacimiento <span className="text-danger">*</span></label>
+                      <input 
+                        type="date" 
+                        className="form-control" 
+                        name="fecha_nacimiento" 
+                        value={formData.fecha_nacimiento} 
+                        onChange={handleInputChange} 
+                        required 
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">DUI</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="dui" 
+                        value={formData.dui} 
+                        onChange={handleInputChange} 
+                        placeholder="12345678-9"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Celular/WhatsApp <span className="text-danger">*</span></label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="celular_whatsapp" 
+                        value={formData.celular_whatsapp} 
+                        onChange={handleInputChange} 
+                        required 
+                        placeholder="7890-1234"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Teléfono Secundario</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="telefono_secundario" 
+                        value={formData.telefono_secundario} 
+                        onChange={handleInputChange} 
+                        placeholder="2234-5678"
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Email</label>
+                      <input 
+                        type="email" 
+                        className="form-control" 
+                        name="email" 
+                        value={formData.email} 
+                        onChange={handleInputChange} 
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Dirección</label>
+                      <textarea 
+                        className="form-control" 
+                        name="direccion" 
+                        value={formData.direccion} 
+                        onChange={handleInputChange} 
+                        rows="2"
+                      ></textarea>
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Nombre Contacto Emergencia</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="nombre_contacto" 
+                        value={formData.nombre_contacto} 
+                        onChange={handleInputChange} 
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Teléfono Contacto Emergencia</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="telefono_contacto" 
+                        value={formData.telefono_contacto} 
+                        onChange={handleInputChange} 
+                      />
+                    </div>
+                    <div className="col-12">
+                      <div className="form-check">
+                        <input 
+                          className="form-check-input" 
+                          type="checkbox" 
+                          name="es_paciente" 
+                          checked={formData.es_paciente} 
+                          onChange={handleInputChange} 
+                        />
+                        <label className="form-check-label">Es paciente</label>
+                      </div>
+                    </div>
+                    <div className="col-12">
+                      <div className="form-check">
+                        <input 
+                          className="form-check-input" 
+                          type="checkbox" 
+                          name="consiente_tratamiento_datos" 
+                          checked={formData.consiente_tratamiento_datos} 
+                          onChange={handleInputChange} 
+                        />
+                        <label className="form-check-label">Consiente tratamiento de datos</label>
+                      </div>
+                    </div>
+                    
+                    <div className="col-12">
+                      <hr />
+                      <label className="form-label fw-bold">Etiquetas</label>
+                      <div className="d-flex flex-wrap gap-2">
+                        {etiquetas.map(etiqueta => {
+                          const seleccionada = etiquetasSeleccionadas.includes(etiqueta.id_etiqueta)
+                          return (
+                            <button
+                              key={etiqueta.id_etiqueta}
+                              type="button"
+                              className={`btn btn-sm ${seleccionada ? '' : 'btn-outline-secondary'}`}
+                              style={seleccionada ? {
+                                backgroundColor: etiqueta.color,
+                                borderColor: etiqueta.color,
+                                color: '#fff'
+                              } : {}}
+                              onClick={() => handleEtiquetaToggle(etiqueta.id_etiqueta)}
+                            >
+                              {etiqueta.nombre}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <small className="text-muted">Selecciona las etiquetas para este paciente</small>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={cerrarModalEditar}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={loadingAction}>
+                    {loadingAction ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2"></span>
+                        Guardando...
+                      </>
+                    ) : (
+                      'Guardar Cambios'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal de confirmación de eliminación */}
       <ConfirmModal
         show={showConfirmDelete}
@@ -287,12 +492,161 @@ function DetallePacienteContent() {
       />
 
       <div className="row">
-        {/* Cards de información del paciente */}
-        <div className="col-12">
-          <div className="card">
-            <div className="card-body">
-              <p className="text-muted">Información del paciente se mostrará aquí...</p>
+        {/* Información Personal */}
+        <div className="col-lg-6 mb-4">
+          <div className="card h-100">
+            <div className="card-header bg-white">
+              <h5 className="mb-0">
+                <i className="ti ti-user-circle me-2"></i>
+                Información Personal
+              </h5>
             </div>
+            <div className="card-body">
+              <div className="row g-3">
+                <div className="col-6">
+                  <small className="text-muted d-block">Sexo</small>
+                  <span className="fw-semibold">{paciente.sexo === 'M' ? 'Masculino' : 'Femenino'}</span>
+                </div>
+                <div className="col-6">
+                  <small className="text-muted d-block">Fecha de Nacimiento</small>
+                  <span className="fw-semibold">{formatearFecha(paciente.fecha_nacimiento)}</span>
+                </div>
+                <div className="col-6">
+                  <small className="text-muted d-block">Edad</small>
+                  <span className="fw-semibold">{calcularEdad(paciente.fecha_nacimiento)}</span>
+                </div>
+                <div className="col-6">
+                  <small className="text-muted d-block">DUI</small>
+                  <span className="fw-semibold">{paciente.dui || 'No registrado'}</span>
+                </div>
+                <div className="col-12">
+                  <small className="text-muted d-block">Dirección</small>
+                  <span className="fw-semibold">{paciente.direccion || 'No registrada'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Información de Contacto */}
+        <div className="col-lg-6 mb-4">
+          <div className="card h-100">
+            <div className="card-header bg-white">
+              <h5 className="mb-0">
+                <i className="ti ti-phone me-2"></i>
+                Información de Contacto
+              </h5>
+            </div>
+            <div className="card-body">
+              <div className="row g-3">
+                <div className="col-6">
+                  <small className="text-muted d-block">Celular/WhatsApp</small>
+                  <span className="fw-semibold">{paciente.celular_whatsapp || 'No registrado'}</span>
+                </div>
+                <div className="col-6">
+                  <small className="text-muted d-block">Teléfono Secundario</small>
+                  <span className="fw-semibold">{paciente.telefono_secundario || 'No registrado'}</span>
+                </div>
+                <div className="col-12">
+                  <small className="text-muted d-block">Email</small>
+                  <span className="fw-semibold">{paciente.email || 'No registrado'}</span>
+                </div>
+                <div className="col-12">
+                  <hr />
+                  <h6 className="fw-bold mb-3">Contacto de Emergencia</h6>
+                </div>
+                <div className="col-6">
+                  <small className="text-muted d-block">Nombre</small>
+                  <span className="fw-semibold">{paciente.nombre_contacto || 'No registrado'}</span>
+                </div>
+                <div className="col-6">
+                  <small className="text-muted d-block">Teléfono</small>
+                  <span className="fw-semibold">{paciente.telefono_contacto || 'No registrado'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Estado y Consentimientos */}
+        <div className="col-lg-6 mb-4">
+          <div className="card">
+            <div className="card-header bg-white">
+              <h5 className="mb-0">
+                <i className="ti ti-shield-check me-2"></i>
+                Estado y Consentimientos
+              </h5>
+            </div>
+            <div className="card-body">
+              <div className="d-flex align-items-center justify-content-between mb-3">
+                <span>Es paciente activo</span>
+                <span className={`badge ${paciente.es_paciente ? 'bg-success' : 'bg-danger'}`}>
+                  {paciente.es_paciente ? 'Sí' : 'No'}
+                </span>
+              </div>
+              <div className="d-flex align-items-center justify-content-between">
+                <span>Consiente tratamiento de datos</span>
+                <span className={`badge ${paciente.consiente_tratamiento_datos ? 'bg-success' : 'bg-danger'}`}>
+                  {paciente.consiente_tratamiento_datos ? 'Sí' : 'No'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Fechas de Registro */}
+        <div className="col-lg-6 mb-4">
+          <div className="card">
+            <div className="card-header bg-white">
+              <h5 className="mb-0">
+                <i className="ti ti-clock me-2"></i>
+                Información de Registro
+              </h5>
+            </div>
+            <div className="card-body">
+              <div className="mb-3">
+                <small className="text-muted d-block">Fecha de Creación</small>
+                <span className="fw-semibold">{formatearFecha(paciente.created_at)}</span>
+              </div>
+              <div>
+                <small className="text-muted d-block">Última Actualización</small>
+                <span className="fw-semibold">{formatearFecha(paciente.updated_at)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs para futuras funcionalidades */}
+      <div className="card">
+        <div className="card-header">
+          <ul className="nav nav-tabs card-header-tabs" role="tablist">
+            <li className="nav-item">
+              <a className="nav-link active" href="#" role="tab">
+                <i className="ti ti-calendar me-2"></i>Citas
+              </a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="#" role="tab">
+                <i className="ti ti-file-text me-2"></i>Historia Clínica
+              </a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="#" role="tab">
+                <i className="ti ti-receipt me-2"></i>Facturación
+              </a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="#" role="tab">
+                <i className="ti ti-photo me-2"></i>Imágenes
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div className="card-body">
+          <div className="text-center py-5">
+            <i className="ti ti-calendar-off" style={{fontSize: '48px', color: '#ccc'}}></i>
+            <p className="mt-3 text-muted">Esta funcionalidad estará disponible próximamente</p>
           </div>
         </div>
       </div>

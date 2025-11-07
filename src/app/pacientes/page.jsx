@@ -369,9 +369,9 @@ export default function Pacientes() {
 
       {/* Modal Crear/Editar Paciente */}
       {showModal && (
-        <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-          <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-            <div className="modal-content">
+        <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050}}>
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content" style={{maxHeight: '90vh', display: 'flex', flexDirection: 'column'}}>
               <div className="modal-header">
                 <h5 className="modal-title">
                   <i className={`ti ti-${modalMode === 'crear' ? 'plus' : 'edit'} me-2`}></i>
@@ -379,8 +379,8 @@ export default function Pacientes() {
                 </h5>
                 <button type="button" className="btn-close" onClick={cerrarModal}></button>
               </div>
-              <form onSubmit={handleSubmit}>
-                <div className="modal-body">
+              <form onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0}}>
+                <div className="modal-body" style={{overflowY: 'auto', flex: 1}}>
                   <div className="row g-3">
                     <div className="col-md-6">
                       <label className="form-label">Nombres <span className="text-danger">*</span></label>
@@ -555,7 +555,7 @@ export default function Pacientes() {
                     </div>
                   </div>
                 </div>
-                <div className="modal-footer">
+                <div className="modal-footer" style={{flexShrink: 0}}>
                   <button type="button" className="btn btn-secondary" onClick={cerrarModal}>
                     Cancelar
                   </button>

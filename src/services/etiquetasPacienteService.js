@@ -18,7 +18,7 @@ const parsearErrorAPI = async (response) => {
 
 export const etiquetasPacienteService = {
   // Asignar etiqueta a paciente
-  async asignar(idPaciente, idEtiqueta, idClinica) {
+  async asignar(idPaciente, idEtiqueta) {
     try {
       const token = authService.getToken()
       
@@ -26,16 +26,19 @@ export const etiquetasPacienteService = {
         throw new Error('No hay sesión activa')
       }
 
-      const response = await apiFetch('etiquetas-paciente', {
+      // Convertir a números para asegurar el tipo correcto
+      const body = {
+        paciente_etiqueta: [parseInt(idPaciente), parseInt(idEtiqueta)]
+      }
+
+      console.log('📤 Asignando etiqueta a paciente:', body)
+
+      const response = await apiFetch('paciente-etiquetas/add', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          id_paciente: idPaciente,
-          id_etiqueta: idEtiqueta,
-          id_clinica: idClinica
-        })
+        body: JSON.stringify(body)
       })
 
       if (!response.ok) {
@@ -44,6 +47,7 @@ export const etiquetasPacienteService = {
       }
 
       const result = await response.json()
+      console.log('✅ Etiqueta asignada:', result)
       return result
     } catch (error) {
       console.error('Error en asignar etiqueta:', error)
@@ -52,7 +56,7 @@ export const etiquetasPacienteService = {
   },
 
   // Desasignar etiqueta de paciente
-  async desasignar(idPaciente, idEtiqueta, idClinica) {
+  async desasignar(idPaciente, idEtiqueta) {
     try {
       const token = authService.getToken()
       
@@ -60,11 +64,19 @@ export const etiquetasPacienteService = {
         throw new Error('No hay sesión activa')
       }
 
-      const response = await apiFetch(`etiquetas-paciente/${idPaciente}/${idEtiqueta}/clinica/${idClinica}`, {
+      // Convertir a números para asegurar el tipo correcto
+      const body = {
+        paciente_etiqueta: [parseInt(idPaciente), parseInt(idEtiqueta)]
+      }
+
+      console.log('📤 Eliminando etiqueta de paciente:', body)
+
+      const response = await apiFetch('paciente-etiquetas/delete', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
-        }
+        },
+        body: JSON.stringify(body)
       })
 
       if (!response.ok) {
@@ -73,6 +85,7 @@ export const etiquetasPacienteService = {
       }
 
       const result = await response.json()
+      console.log('✅ Etiqueta eliminada:', result)
       return result
     } catch (error) {
       console.error('Error en desasignar etiqueta:', error)

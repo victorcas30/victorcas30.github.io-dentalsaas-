@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import HorizontalLayout from '@/components/layout/HorizontalLayout'
 import ConfirmModal from '@/components/ConfirmModal'
 import { pacientesService } from '@/services/pacientesService'
+import { etiquetasPacienteService } from '@/services/etiquetasPacienteService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI, mostrarExito } from '@/utils/sweetAlertHelper'
 
@@ -19,7 +20,7 @@ function DetallePacienteContent() {
   const [showModalEditar, setShowModalEditar] = useState(false)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [loadingAction, setLoadingAction] = useState(false)
-  const [etiquetasSeleccionadas, setEtiquetasSeleccionadas] = useState([])
+  const [loadingEtiqueta, setLoadingEtiqueta] = useState(null)
   const [formData, setFormData] = useState({
     nombres: '',
     apellidos: '',
@@ -104,20 +105,35 @@ function DetallePacienteContent() {
       consiente_tratamiento_datos: paciente.consiente_tratamiento_datos
     })
     
-    // Obtener IDs de etiquetas asignadas
-    const etiquetasAsignadas = paciente.etiquetas?.filter(e => e.asignada).map(e => e.id_etiqueta) || []
-    setEtiquetasSeleccionadas(etiquetasAsignadas)
     setShowModalEditar(true)
   }
 
-  const handleEtiquetaToggle = (idEtiqueta) => {
-    setEtiquetasSeleccionadas(prev => {
-      if (prev.includes(idEtiqueta)) {
-        return prev.filter(id => id !== idEtiqueta)
+  // Toggle de etiqueta: asigna o desasigna inmediatamente en la BD
+  const handleEtiquetaToggle = async (etiqueta) => {
+    const estaAsignada = etiqueta.asignada
+    
+    try {
+      setLoadingEtiqueta(etiqueta.id_etiqueta)
+      
+      if (estaAsignada) {
+        // Desasignar etiqueta
+        await etiquetasPacienteService.desasignar(idPaciente, etiqueta.id_etiqueta)
+        await mostrarExito(`Etiqueta "${etiqueta.nombre}" eliminada`)
       } else {
-        return [...prev, idEtiqueta]
+        // Asignar etiqueta
+        await etiquetasPacienteService.asignar(idPaciente, etiqueta.id_etiqueta)
+        await mostrarExito(`Etiqueta "${etiqueta.nombre}" asignada`)
       }
-    })
+      
+      // Recargar paciente para actualizar las etiquetas
+      await cargarPaciente()
+      
+    } catch (err) {
+      console.error('Error al toggle etiqueta:', err)
+      await mostrarErrorAPI(err)
+    } finally {
+      setLoadingEtiqueta(null)
+    }
   }
 
   const cerrarModalEditar = () => {
@@ -129,20 +145,8 @@ function DetallePacienteContent() {
     setLoadingAction(true)
 
     try {
+      // Solo actualizar los datos del paciente, las etiquetas ya se gestionaron en tiempo real
       await pacientesService.actualizar(idPaciente, idClinica, formData)
-      
-      const etiquetasPacienteService = await import('@/services/etiquetasPacienteService').then(m => m.etiquetasPacienteService)
-      const etiquetasOriginales = paciente.etiquetas?.filter(e => e.asignada).map(e => e.id_etiqueta) || []
-      
-      const etiquetasAgregar = etiquetasSeleccionadas.filter(id => !etiquetasOriginales.includes(id))
-      for (const idEtiqueta of etiquetasAgregar) {
-        await etiquetasPacienteService.asignar(idPaciente, idEtiqueta, idClinica)
-      }
-      
-      const etiquetasRemover = etiquetasOriginales.filter(id => !etiquetasSeleccionadas.includes(id))
-      for (const idEtiqueta of etiquetasRemover) {
-        await etiquetasPacienteService.desasignar(idPaciente, idEtiqueta, idClinica)
-      }
       
       await mostrarExito('Paciente actualizado exitosamente')
       await cargarPaciente()
@@ -269,9 +273,9 @@ function DetallePacienteContent() {
 
       {/* Modal Editar Paciente */}
       {showModalEditar && (
-        <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-          <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-            <div className="modal-content">
+        <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050}}>
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content" style={{maxHeight: '90vh', display: 'flex', flexDirection: 'column'}}>
               <div className="modal-header">
                 <h5 className="modal-title">
                   <i className="ti ti-edit me-2"></i>
@@ -279,8 +283,8 @@ function DetallePacienteContent() {
                 </h5>
                 <button type="button" className="btn-close" onClick={cerrarModalEditar}></button>
               </div>
-              <form onSubmit={handleSubmitEditar}>
-                <div className="modal-body">
+              <form onSubmit={handleSubmitEditar} style={{display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0}}>
+                <div className="modal-body" style={{overflowY: 'auto', flex: 1}}>
                   <div className="row g-3">
                     <div className="col-md-6">
                       <label className="form-label">Nombres <span className="text-danger">*</span></label>
@@ -429,32 +433,43 @@ function DetallePacienteContent() {
                     
                     <div className="col-12">
                       <hr />
-                      <label className="form-label fw-bold">Etiquetas</label>
+                      <label className="form-label fw-bold">
+                        Etiquetas
+                        <small className="text-muted ms-2">(Los cambios se guardan automáticamente)</small>
+                      </label>
                       <div className="d-flex flex-wrap gap-2">
                         {paciente.etiquetas?.map(etiqueta => {
-                          const seleccionada = etiquetasSeleccionadas.includes(etiqueta.id_etiqueta)
+                          const estaAsignada = etiqueta.asignada
+                          const estaCargando = loadingEtiqueta === etiqueta.id_etiqueta
+                          
                           return (
                             <button
                               key={etiqueta.id_etiqueta}
                               type="button"
-                              className={`btn btn-sm ${seleccionada ? '' : 'btn-outline-secondary'}`}
-                              style={seleccionada ? {
+                              className={`btn btn-sm ${estaAsignada ? '' : 'btn-outline-secondary'}`}
+                              style={estaAsignada ? {
                                 backgroundColor: etiqueta.color,
                                 borderColor: etiqueta.color,
                                 color: '#fff'
                               } : {}}
-                              onClick={() => handleEtiquetaToggle(etiqueta.id_etiqueta)}
+                              onClick={() => handleEtiquetaToggle(etiqueta)}
+                              disabled={estaCargando || loadingEtiqueta !== null}
                             >
+                              {estaCargando && (
+                                <span className="spinner-border spinner-border-sm me-1"></span>
+                              )}
                               {etiqueta.nombre}
                             </button>
                           )
                         })}
                       </div>
-                      <small className="text-muted">Selecciona las etiquetas para este paciente</small>
+                      <small className="text-muted">
+                        Haz clic en una etiqueta para asignarla o quitarla del paciente
+                      </small>
                     </div>
                   </div>
                 </div>
-                <div className="modal-footer">
+                <div className="modal-footer" style={{flexShrink: 0}}>
                   <button type="button" className="btn btn-secondary" onClick={cerrarModalEditar}>
                     Cancelar
                   </button>

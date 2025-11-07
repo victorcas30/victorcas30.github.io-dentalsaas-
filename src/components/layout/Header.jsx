@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { buildAssetPath } from '@/config/api'
 
 export default function Header({ onToggleSidebar }) {
   const [isDarkMode, setIsDarkMode] = useState(false)
@@ -116,7 +117,7 @@ export default function Header({ onToggleSidebar }) {
                   data-bs-toggle="dropdown"
                 >
                   <img 
-                    src="/assets/images/profile/user-1.jpg" 
+                    src={buildAssetPath('/assets/images/profile/user-1.jpg')} 
                     alt="user" 
                     className="rounded-circle" 
                     width="35" 

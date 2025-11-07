@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { authService } from '@/services/authService'
+import { buildAssetPath } from '@/config/api'
 import Swal from 'sweetalert2'
 
 export default function HorizontalHeader({ onToggleSidebar, usuario }) {
@@ -277,7 +278,7 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
                     <div className="message-body">
                       <a href="#" className="dropdown-item px-3 d-flex align-items-start gap-3 py-3">
                         <span className="flex-shrink-0">
-                          <img src="/assets/images/profile/user-1.jpg" alt="user" className="rounded-circle" width="40" height="40" />
+                          <img src={buildAssetPath('/assets/images/profile/user-1.jpg')} alt="user" className="rounded-circle" width="40" height="40" />
                         </span>
                         <div className="w-75">
                           <h6 className="mb-1 fw-semibold">María García</h6>
@@ -305,7 +306,7 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
                     <div className="d-flex align-items-center gap-2">
                       <div className="position-relative">
                         <img 
-                          src="/assets/images/profile/user-1.jpg" 
+                          src={buildAssetPath('/assets/images/profile/user-1.jpg')} 
                           alt="user" 
                           className="rounded-circle" 
                           width="35" 
@@ -436,7 +437,7 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
           <div className="text-center border-bottom pb-3 mb-3">
             <div className="position-relative d-inline-block">
               <img 
-                src="/assets/images/profile/user-1.jpg" 
+                src={buildAssetPath('/assets/images/profile/user-1.jpg')} 
                 alt="user" 
                 className="rounded-circle mb-2" 
                 width="60" 

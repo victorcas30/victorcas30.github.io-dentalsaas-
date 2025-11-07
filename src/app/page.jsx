@@ -1,6 +1,7 @@
 'use client'
 
 import HorizontalLayout from '@/components/layout/HorizontalLayout'
+import { buildAssetPath } from '@/config/api'
 
 export default function Home() {
   return (
@@ -121,7 +122,7 @@ export default function Home() {
                     <tr>
                       <td>
                         <div className="d-flex align-items-center">
-                          <img src="/assets/images/profile/user-1.jpg" className="rounded-circle me-2" width="35" height="35" alt="user" />
+                          <img src={buildAssetPath('/assets/images/profile/user-1.jpg')} className="rounded-circle me-2" width="35" height="35" alt="user" />
                           <span>María García</span>
                         </div>
                       </td>
@@ -133,7 +134,7 @@ export default function Home() {
                     <tr>
                       <td>
                         <div className="d-flex align-items-center">
-                          <img src="/assets/images/profile/user-1.jpg" className="rounded-circle me-2" width="35" height="35" alt="user" />
+                          <img src={buildAssetPath('/assets/images/profile/user-1.jpg')} className="rounded-circle me-2" width="35" height="35" alt="user" />
                           <span>Carlos López</span>
                         </div>
                       </td>
@@ -145,7 +146,7 @@ export default function Home() {
                     <tr>
                       <td>
                         <div className="d-flex align-items-center">
-                          <img src="/assets/images/profile/user-1.jpg" className="rounded-circle me-2" width="35" height="35" alt="user" />
+                          <img src={buildAssetPath('/assets/images/profile/user-1.jpg')} className="rounded-circle me-2" width="35" height="35" alt="user" />
                           <span>Ana Rodríguez</span>
                         </div>
                       </td>

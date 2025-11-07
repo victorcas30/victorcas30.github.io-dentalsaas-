@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { buildAssetPath } from '@/config/api'
 
 export default function Sidebar({ isOpen, onClose }) {
   const pathname = usePathname()
@@ -34,7 +35,7 @@ export default function Sidebar({ isOpen, onClose }) {
                    margin: '15px'
                  }}>
               <div className="profile-img mb-2">
-                <img src="/assets/images/profile/user-1.jpg" 
+                <img src={buildAssetPath('/assets/images/profile/user-1.jpg')} 
                      alt="user" 
                      className="rounded-circle" 
                      style={{width: '60px', height: '60px', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.3)'}} />

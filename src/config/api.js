@@ -58,6 +58,21 @@ export const buildAppRoute = (path) => {
   return `${cleanBasePath}${cleanPath}`
 }
 
+// Helper para construir rutas de assets (imágenes, etc.) con basePath
+export const buildAssetPath = (assetPath) => {
+  // Obtener el basePath de la variable de entorno
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+  
+  // Asegurar que el path comience con /
+  const cleanPath = assetPath.startsWith('/') ? assetPath : `/${assetPath}`
+  
+  // Asegurar que el basePath no termine con /
+  const cleanBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+  
+  // Construir la ruta completa del asset
+  return `${cleanBasePath}${cleanPath}`
+}
+
 // Helper para refrescar el token
 const refreshAccessToken = async () => {
   try {

@@ -1,4 +1,4 @@
-import API_CONFIG, { apiFetch } from '@/config/api'
+import API_CONFIG, { apiFetch, buildAppRoute } from '@/config/api'
 
 export const authService = {
   // Login
@@ -60,7 +60,7 @@ export const authService = {
       localStorage.removeItem('modulos')
       
       // Redirigir al login
-      window.location.href = '/login'
+      window.location.href = buildAppRoute('/login/')
     } catch (error) {
       console.error('Error en logout:', error)
       // Asegurar que se limpie localStorage aunque falle la petición
@@ -68,7 +68,7 @@ export const authService = {
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('usuario')
       localStorage.removeItem('modulos')
-      window.location.href = '/login'
+      window.location.href = buildAppRoute('/login/')
     }
   },
 
@@ -103,7 +103,7 @@ export const authService = {
       localStorage.removeItem('modulos')
       
       // Redirigir al login
-      window.location.href = '/login'
+      window.location.href = buildAppRoute('/login/')
       
       return data
     } catch (error) {
@@ -113,7 +113,7 @@ export const authService = {
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('usuario')
       localStorage.removeItem('modulos')
-      window.location.href = '/login'
+      window.location.href = buildAppRoute('/login/')
       throw error
     }
   },

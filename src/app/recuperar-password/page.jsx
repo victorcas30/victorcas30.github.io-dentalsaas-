@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { buildAppRoute } from '@/config/api'
 
 export default function RecuperarPassword() {
   const [email, setEmail] = useState('')
@@ -123,7 +124,7 @@ export default function RecuperarPassword() {
                       
                       <div className="d-grid gap-2">
                         <button 
-                          onClick={() => window.location.href = '/login'}
+                          onClick={() => window.location.href = buildAppRoute('/login/')}
                           className="btn btn-primary py-3 fw-semibold"
                           style={{borderRadius: '10px'}}
                         >

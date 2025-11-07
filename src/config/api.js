@@ -43,6 +43,21 @@ export const buildUrl = (endpoint) => {
   return `${API_CONFIG.BASE_URL}/${cleanEndpoint}`
 }
 
+// Helper para construir rutas de la aplicación con basePath
+export const buildAppRoute = (path) => {
+  // Obtener el basePath de la variable de entorno
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+  
+  // Asegurar que el path comience con /
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+  
+  // Asegurar que el basePath no termine con /
+  const cleanBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+  
+  // Construir la ruta completa
+  return `${cleanBasePath}${cleanPath}`
+}
+
 // Helper para refrescar el token
 const refreshAccessToken = async () => {
   try {
@@ -83,7 +98,7 @@ const refreshAccessToken = async () => {
     localStorage.removeItem('modulos')
     
     if (typeof window !== 'undefined') {
-      window.location.href = '/login'
+      window.location.href = buildAppRoute('/login/')
     }
     
     throw error

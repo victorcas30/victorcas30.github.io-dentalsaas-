@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { buildAppRoute } from '@/config/api'
 
 export default function Registro() {
   const [formData, setFormData] = useState({
@@ -42,7 +43,7 @@ export default function Registro() {
     // Aquí irá la lógica de registro
     console.log('Registro:', formData)
     alert('¡Registro exitoso! (Por ahora solo frontend)')
-    window.location.href = '/login'
+    window.location.href = buildAppRoute('/login/')
   }
 
   return (

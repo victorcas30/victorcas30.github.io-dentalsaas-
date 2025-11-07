@@ -19,7 +19,6 @@ function DetallePacienteContent() {
   const [showModalEditar, setShowModalEditar] = useState(false)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [loadingAction, setLoadingAction] = useState(false)
-  const [etiquetas, setEtiquetas] = useState([])
   const [etiquetasSeleccionadas, setEtiquetasSeleccionadas] = useState([])
   const [formData, setFormData] = useState({
     nombres: '',
@@ -40,19 +39,8 @@ function DetallePacienteContent() {
   useEffect(() => {
     if (idPaciente) {
       cargarPaciente()
-      cargarEtiquetas()
     }
   }, [idPaciente])
-
-  const cargarEtiquetas = async () => {
-    try {
-      const etiquetasService = await import('@/services/etiquetasService').then(m => m.etiquetasService)
-      const data = await etiquetasService.listarPorClinica(idClinica)
-      setEtiquetas(data)
-    } catch (err) {
-      console.error('Error al cargar etiquetas:', err)
-    }
-  }
 
   const cargarPaciente = async () => {
     try {
@@ -115,6 +103,8 @@ function DetallePacienteContent() {
       es_paciente: paciente.es_paciente,
       consiente_tratamiento_datos: paciente.consiente_tratamiento_datos
     })
+    
+    // Obtener IDs de etiquetas asignadas
     const etiquetasAsignadas = paciente.etiquetas?.filter(e => e.asignada).map(e => e.id_etiqueta) || []
     setEtiquetasSeleccionadas(etiquetasAsignadas)
     setShowModalEditar(true)
@@ -221,6 +211,9 @@ function DetallePacienteContent() {
     )
   }
 
+  // Filtrar solo las etiquetas asignadas
+  const etiquetasAsignadas = paciente.etiquetas?.filter(e => e.asignada) || []
+
   return (
     <HorizontalLayout>
       {/* Header */}
@@ -243,18 +236,22 @@ function DetallePacienteContent() {
                   {paciente.nombres} {paciente.apellidos}
                 </h2>
                 <div className="d-flex gap-2 flex-wrap">
-                  {paciente.etiquetas?.map(etiqueta => (
-                    <span 
-                      key={etiqueta.id_etiqueta}
-                      className="badge"
-                      style={{
-                        backgroundColor: etiqueta.color,
-                        color: '#fff'
-                      }}
-                    >
-                      {etiqueta.nombre}
-                    </span>
-                  ))}
+                  {etiquetasAsignadas.length > 0 ? (
+                    etiquetasAsignadas.map(etiqueta => (
+                      <span 
+                        key={etiqueta.id_etiqueta}
+                        className="badge"
+                        style={{
+                          backgroundColor: etiqueta.color,
+                          color: '#fff'
+                        }}
+                      >
+                        {etiqueta.nombre}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-muted">Sin etiquetas asignadas</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -434,7 +431,7 @@ function DetallePacienteContent() {
                       <hr />
                       <label className="form-label fw-bold">Etiquetas</label>
                       <div className="d-flex flex-wrap gap-2">
-                        {etiquetas.map(etiqueta => {
+                        {paciente.etiquetas?.map(etiqueta => {
                           const seleccionada = etiquetasSeleccionadas.includes(etiqueta.id_etiqueta)
                           return (
                             <button

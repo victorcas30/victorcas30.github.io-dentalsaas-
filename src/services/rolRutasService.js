@@ -29,8 +29,11 @@ export const rolRutasService = {
         throw new Error('No hay sesión activa')
       }
 
+      // Convertir a boolean (activo puede venir como 0, 1, true, false)
+      const activoBoolean = Boolean(activo)
+
       const body = {
-        activo: Boolean(activo),
+        activo: activoBoolean,
         rol_ruta: [idRol, idRuta]
       }
 
@@ -69,7 +72,7 @@ export const rolRutasService = {
 
       // Crear array de promesas para asignar todas las rutas
       const promesas = idsRutas.map(idRuta => 
-        this.toggleRutaRol(idRol, idRuta, 1)
+        this.toggleRutaRol(idRol, idRuta, true)
       )
 
       await Promise.all(promesas)

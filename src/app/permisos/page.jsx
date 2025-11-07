@@ -61,13 +61,13 @@ export default function Permisos() {
     try {
       setGuardando(true)
       
-      // Toggle: si está asignada, desasignar (0), si no, asignar (1)
-      const activo = estaAsignada ? 0 : 1
+      // Toggle: si está asignada, desasignar (false), si no, asignar (true)
+      const activoBoolean = !estaAsignada
       
       await rolRutasService.toggleRutaRol(
         rolSeleccionado.id_rol,
         idRuta,
-        activo
+        activoBoolean
       )
       
       // Actualizar estado local: cambiar el campo 'activa' de la ruta
@@ -75,7 +75,7 @@ export default function Permisos() {
         ...modulo,
         rutas: modulo.rutas.map(ruta => 
           ruta.id_ruta === idRuta 
-            ? { ...ruta, activa: activo === 1 }
+            ? { ...ruta, activa: activoBoolean }
             : ruta
         )
       }))
@@ -104,7 +104,7 @@ export default function Permisos() {
         await rolRutasService.toggleRutaRol(
           rolSeleccionado.id_rol,
           ruta.id_ruta,
-          seleccionar ? 1 : 0
+          seleccionar
         )
       }
       

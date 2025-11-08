@@ -6,6 +6,7 @@ import HorizontalLayout from '@/components/layout/HorizontalLayout'
 import ConfirmModal from '@/components/ConfirmModal'
 import { pacientesService } from '@/services/pacientesService'
 import { etiquetasService } from '@/services/etiquetasService'
+import { etiquetasPacienteService } from '@/services/etiquetasPacienteService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI, mostrarExito } from '@/utils/sweetAlertHelper'
 
@@ -20,6 +21,8 @@ export default function Pacientes() {
   const [loadingAction, setLoadingAction] = useState(false)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [pacienteToDelete, setPacienteToDelete] = useState(null)
+  const [loadingEtiqueta, setLoadingEtiqueta] = useState(null)
+  const [etiquetasPaciente, setEtiquetasPaciente] = useState([]) // Etiquetas del paciente con estado asignada
   
   // Filtros
   const [busqueda, setBusqueda] = useState('')
@@ -55,6 +58,13 @@ export default function Pacientes() {
         pacientesService.listarPorClinica(idClinica),
         etiquetasService.listarPorClinica(idClinica)
       ])
+      
+      // Debug: verificar si las etiquetas vienen en el listado
+      console.log('📋 Pacientes cargados:', pacientesData)
+      if (pacientesData.length > 0) {
+        console.log('🏷️ Etiquetas del primer paciente:', pacientesData[0].etiquetas)
+      }
+      
       setPacientes(pacientesData)
       setEtiquetas(etiquetasData)
     } catch (err) {
@@ -73,6 +83,7 @@ export default function Pacientes() {
     })
   }
 
+  // Toggle de etiqueta para modo crear (solo en memoria)
   const handleEtiquetaToggle = (idEtiqueta) => {
     const etiquetasActuales = formData.etiquetas || []
     const existe = etiquetasActuales.includes(idEtiqueta)
@@ -83,6 +94,45 @@ export default function Pacientes() {
         ? etiquetasActuales.filter(id => id !== idEtiqueta)
         : [...etiquetasActuales, idEtiqueta]
     })
+  }
+
+  // Toggle de etiqueta para modo editar (en tiempo real en BD)
+  const handleEtiquetaToggleEditar = async (etiqueta) => {
+    if (!pacienteSeleccionado) return
+    
+    const estaAsignada = etiqueta.asignada
+    
+    try {
+      setLoadingEtiqueta(etiqueta.id_etiqueta)
+      
+      if (estaAsignada) {
+        // Desasignar etiqueta
+        await etiquetasPacienteService.desasignar(pacienteSeleccionado.id_paciente, etiqueta.id_etiqueta)
+        await mostrarExito(`Etiqueta "${etiqueta.nombre}" eliminada`)
+      } else {
+        // Asignar etiqueta
+        await etiquetasPacienteService.asignar(pacienteSeleccionado.id_paciente, etiqueta.id_etiqueta)
+        await mostrarExito(`Etiqueta "${etiqueta.nombre}" asignada`)
+      }
+      
+      // Actualizar estado local
+      setEtiquetasPaciente(prev => 
+        prev.map(e => 
+          e.id_etiqueta === etiqueta.id_etiqueta 
+            ? { ...e, asignada: !estaAsignada }
+            : e
+        )
+      )
+      
+      // Recargar lista de pacientes para actualizar la vista
+      await cargarDatos()
+      
+    } catch (err) {
+      console.error('Error al toggle etiqueta:', err)
+      await mostrarErrorAPI(err)
+    } finally {
+      setLoadingEtiqueta(null)
+    }
   }
 
   const abrirModalCrear = () => {
@@ -107,7 +157,7 @@ export default function Pacientes() {
     setShowModal(true)
   }
 
-  const abrirModalEditar = (paciente) => {
+  const abrirModalEditar = async (paciente) => {
     setModalMode('editar')
     const fechaNacimiento = paciente.fecha_nacimiento ? paciente.fecha_nacimiento.split('T')[0] : ''
     
@@ -128,12 +178,33 @@ export default function Pacientes() {
       etiquetas: []
     })
     setPacienteSeleccionado(paciente)
+    
+    // Cargar paciente completo con etiquetas para el modo editar
+    try {
+      const pacienteCompleto = await pacientesService.obtenerPorId(paciente.id_paciente, idClinica)
+      // Combinar etiquetas disponibles con las del paciente
+      const etiquetasCombinadas = etiquetas.map(etiqueta => {
+        const etiquetaPaciente = pacienteCompleto.etiquetas?.find(e => e.id_etiqueta === etiqueta.id_etiqueta)
+        return {
+          ...etiqueta,
+          asignada: etiquetaPaciente?.asignada || false
+        }
+      })
+      setEtiquetasPaciente(etiquetasCombinadas)
+    } catch (err) {
+      console.error('Error al cargar etiquetas del paciente:', err)
+      // Si falla, usar solo las etiquetas disponibles sin estado
+      setEtiquetasPaciente(etiquetas.map(e => ({ ...e, asignada: false })))
+    }
+    
     setShowModal(true)
   }
 
   const cerrarModal = () => {
     setShowModal(false)
     setPacienteSeleccionado(null)
+    setEtiquetasPaciente([])
+    setLoadingEtiqueta(null)
   }
 
   const handleSubmit = async (e) => {
@@ -319,18 +390,24 @@ export default function Pacientes() {
                       <td>{formatearFecha(paciente.proxima_cita)}</td>
                       <td>
                         <div className="d-flex gap-1 flex-wrap">
-                          {paciente.etiquetas?.map(etiqueta => (
-                            <span 
-                              key={etiqueta.id_etiqueta}
-                              className="badge"
-                              style={{
-                                backgroundColor: etiqueta.color,
-                                color: '#fff'
-                              }}
-                            >
-                              {etiqueta.nombre}
-                            </span>
-                          ))}
+                          {paciente.etiquetas && paciente.etiquetas.length > 0 ? (
+                            paciente.etiquetas
+                              .filter(etiqueta => etiqueta.asignada !== false) // Filtrar solo las asignadas
+                              .map(etiqueta => (
+                                <span 
+                                  key={etiqueta.id_etiqueta}
+                                  className="badge"
+                                  style={{
+                                    backgroundColor: etiqueta.color || '#6c757d',
+                                    color: '#fff'
+                                  }}
+                                >
+                                  {etiqueta.nombre}
+                                </span>
+                              ))
+                          ) : (
+                            <span className="text-muted small">Sin etiquetas</span>
+                          )}
                         </div>
                       </td>
                       <td className="text-end">
@@ -503,11 +580,18 @@ export default function Pacientes() {
                       />
                     </div>
                     
-                    {modalMode === 'crear' && (
-                      <div className="col-12">
-                        <label className="form-label">Etiquetas</label>
-                        <div className="d-flex flex-wrap gap-2">
-                          {etiquetas.map(etiqueta => {
+                    <div className="col-12">
+                      <hr />
+                      <label className="form-label fw-bold">
+                        Etiquetas
+                        {modalMode === 'editar' && (
+                          <small className="text-muted ms-2">(Los cambios se guardan automáticamente)</small>
+                        )}
+                      </label>
+                      <div className="d-flex flex-wrap gap-2">
+                        {modalMode === 'crear' ? (
+                          // Modo crear: etiquetas en memoria
+                          etiquetas.map(etiqueta => {
                             const seleccionada = formData.etiquetas?.includes(etiqueta.id_etiqueta)
                             return (
                               <button
@@ -524,10 +608,45 @@ export default function Pacientes() {
                                 {etiqueta.nombre}
                               </button>
                             )
-                          })}
-                        </div>
+                          })
+                        ) : (
+                          // Modo editar: etiquetas en tiempo real
+                          etiquetasPaciente.length > 0 ? (
+                            etiquetasPaciente.map(etiqueta => {
+                              const estaAsignada = etiqueta.asignada
+                              const estaCargando = loadingEtiqueta === etiqueta.id_etiqueta
+                              
+                              return (
+                                <button
+                                  key={etiqueta.id_etiqueta}
+                                  type="button"
+                                  className={`btn btn-sm ${estaAsignada ? '' : 'btn-outline-secondary'}`}
+                                  style={estaAsignada ? {
+                                    backgroundColor: etiqueta.color,
+                                    borderColor: etiqueta.color,
+                                    color: '#fff'
+                                  } : {}}
+                                  onClick={() => handleEtiquetaToggleEditar(etiqueta)}
+                                  disabled={estaCargando || loadingEtiqueta !== null}
+                                >
+                                  {estaCargando && (
+                                    <span className="spinner-border spinner-border-sm me-1"></span>
+                                  )}
+                                  {etiqueta.nombre}
+                                </button>
+                              )
+                            })
+                          ) : (
+                            <span className="text-muted">Cargando etiquetas...</span>
+                          )
+                        )}
                       </div>
-                    )}
+                      {modalMode === 'editar' && (
+                        <small className="text-muted d-block mt-2">
+                          Haz clic en una etiqueta para asignarla o quitarla del paciente
+                        </small>
+                      )}
+                    </div>
 
                     <div className="col-12">
                       <div className="form-check">

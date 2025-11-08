@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { authService } from '@/services/authService'
+import { getRutaIcon } from '@/utils/menuIcons'
 
 export default function PageHeader() {
   const pathname = usePathname()
@@ -67,15 +68,3 @@ export default function PageHeader() {
   )
 }
 
-// Función para obtener iconos según el nombre de la ruta
-function getRutaIcon(nombreRuta) {
-  const iconMap = {
-    'Horarios': 'ti ti-clock',
-    'Usuarios y permisos': 'ti ti-user-shield',
-    'Plantillas de mensajes': 'ti ti-message',
-    'Políticas de descuento': 'ti ti-discount',
-    'Información de la clinica': 'ti ti-building-hospital',
-    'Información de la clínica': 'ti ti-building-hospital'
-  }
-  return iconMap[nombreRuta] || 'ti ti-file'
-}

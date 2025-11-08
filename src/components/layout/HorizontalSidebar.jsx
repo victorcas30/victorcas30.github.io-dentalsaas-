@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { authService } from '@/services/authService'
+import { getModuloIcon, getRutaIcon } from '@/utils/menuIcons'
 
 export default function HorizontalSidebar() {
   const pathname = usePathname()
@@ -51,64 +52,7 @@ export default function HorizontalSidebar() {
           Dashboard
         </Link>
 
-        {/* Módulos del Sistema */}
-        <Link 
-          href="/modulos"
-          style={{
-            padding: '15px 20px',
-            textDecoration: 'none',
-            color: pathname === '/modulos' ? '#1B84FF' : '#768B9E',
-            borderBottom: pathname === '/modulos' ? '3px solid #1B84FF' : '3px solid transparent',
-            fontWeight: pathname === '/modulos' ? 600 : 400,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'all 0.2s'
-          }}
-        >
-          <i className="ti ti-layout-grid" style={{fontSize: '18px'}}></i>
-          Módulos
-        </Link>
-
-        {/* Usuarios */}
-        <Link 
-          href="/usuarios"
-          style={{
-            padding: '15px 20px',
-            textDecoration: 'none',
-            color: pathname === '/usuarios' ? '#1B84FF' : '#768B9E',
-            borderBottom: pathname === '/usuarios' ? '3px solid #1B84FF' : '3px solid transparent',
-            fontWeight: pathname === '/usuarios' ? 600 : 400,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'all 0.2s'
-          }}
-        >
-          <i className="ti ti-user-shield" style={{fontSize: '18px'}}></i>
-          Usuarios
-        </Link>
-
-        {/* Permisos */}
-        <Link 
-          href="/permisos"
-          style={{
-            padding: '15px 20px',
-            textDecoration: 'none',
-            color: pathname === '/permisos' ? '#1B84FF' : '#768B9E',
-            borderBottom: pathname === '/permisos' ? '3px solid #1B84FF' : '3px solid transparent',
-            fontWeight: pathname === '/permisos' ? 600 : 400,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'all 0.2s'
-          }}
-        >
-          <i className="ti ti-lock-access" style={{fontSize: '18px'}}></i>
-          Permisos
-        </Link>
-
-        {/* Módulos */}
+        {/* Módulos dinámicos de la API */}
         {modulos.map((modulo) => (
           <div 
             key={modulo.id_modulo}
@@ -245,34 +189,3 @@ export default function HorizontalSidebar() {
   )
 }
 
-// Función para obtener iconos según el nombre del módulo
-function getModuloIcon(nombreModulo) {
-  const iconMap = {
-    'Configuración': 'ti ti-settings',
-    'Pacientes': 'ti ti-users',
-    'Citas': 'ti ti-calendar',
-    'Tratamientos': 'ti ti-dental',
-    'Facturación': 'ti ti-file-invoice',
-    'Reportes': 'ti ti-chart-bar',
-    'Inventario': 'ti ti-package',
-    'Agenda': 'ti ti-calendar-event',
-    'Clínica': 'ti ti-building-hospital'
-  }
-  return iconMap[nombreModulo] || 'ti ti-folder'
-}
-
-// Función para obtener iconos según el nombre de la ruta
-function getRutaIcon(nombreRuta) {
-  const iconMap = {
-    'Horarios': 'ti ti-clock',
-    'Usuarios y permisos': 'ti ti-user-shield',
-    'Plantillas de mensajes': 'ti ti-message',
-    'Políticas de descuento': 'ti ti-discount',
-    'Información de la clinica': 'ti ti-building-hospital',
-    'Información de la clínica': 'ti ti-building-hospital',
-    'Servicios': 'ti ti-medical-cross',
-    'Métodos de pago': 'ti ti-credit-card',
-    'Especialidades': 'ti ti-stethoscope'
-  }
-  return iconMap[nombreRuta] || 'ti ti-point'
-}

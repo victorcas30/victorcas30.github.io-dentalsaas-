@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { authService } from '@/services/authService'
 import { buildAssetPath } from '@/config/api'
 import Swal from 'sweetalert2'
+import { getRutaIcon } from '@/utils/menuIcons'
 
 export default function HorizontalHeader({ onToggleSidebar, usuario }) {
   const [isDarkMode, setIsDarkMode] = useState(false)
@@ -552,15 +553,3 @@ export default function HorizontalHeader({ onToggleSidebar, usuario }) {
   )
 }
 
-// Función para obtener iconos según el nombre de la ruta
-function getRutaIcon(nombreRuta) {
-  const iconMap = {
-    'Horarios': 'ti ti-clock',
-    'Usuarios y permisos': 'ti ti-user-shield',
-    'Plantillas de mensajes': 'ti ti-message',
-    'Políticas de descuento': 'ti ti-discount',
-    'Información de la clinica': 'ti ti-building-hospital'
-  }
-  
-  return iconMap[nombreRuta] || 'ti ti-point'
-}

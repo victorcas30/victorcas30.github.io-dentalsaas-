@@ -26,7 +26,10 @@ export const MODULO_ICONS = {
   'Notificaciones': 'ti ti-bell',
   'Documentos': 'ti ti-files',
   'Estadísticas': 'ti ti-chart-line',
-  'Dashboard': 'ti ti-layout-dashboard'
+  'Dashboard': 'ti ti-layout-dashboard',
+  'Etiquetas': 'ti ti-tags',
+  'Doctores': 'ti ti-user-doctor',
+  'Salas': 'ti ti-building'
 }
 
 // Diccionario de iconos para rutas
@@ -74,7 +77,10 @@ export const RUTA_ICONS = {
   'Servicios': 'ti ti-medical-cross',
   'Especialidades': 'ti ti-stethoscope',
   'Doctores': 'ti ti-user-doctor',
+  'Doctor': 'ti ti-user-doctor',
   'Consultorios': 'ti ti-building',
+  'Salas': 'ti ti-building',
+  'Sala': 'ti ti-building',
   'Equipos': 'ti ti-tools',
   
   // Inventario
@@ -97,6 +103,7 @@ export const RUTA_ICONS = {
   'Backup': 'ti ti-database',
   'Logs': 'ti ti-file-text',
   'Auditoría': 'ti ti-file-search',
+  'Etiquetas': 'ti ti-tags',
   
   // Comunicación
   'Mensajes': 'ti ti-message',
@@ -146,21 +153,38 @@ export function getModuloIcon(nombreModulo) {
 export function getRutaIcon(nombreRuta) {
   if (!nombreRuta) return 'ti ti-point'
   
+  // Limpiar el nombre (trim espacios y convertir a minúsculas para comparación)
+  const nombreLimpio = nombreRuta.trim()
+  const nombreLower = nombreLimpio.toLowerCase()
+  
+  // DEBUG: Log temporal para ver qué está llegando
+  console.log('🔍 Buscando icono para:', nombreRuta, '→', nombreLimpio, '→', nombreLower)
+  
   // Buscar coincidencia exacta
-  if (RUTA_ICONS[nombreRuta]) {
-    return RUTA_ICONS[nombreRuta]
+  if (RUTA_ICONS[nombreLimpio]) {
+    console.log('✅ Encontrado por coincidencia exacta:', RUTA_ICONS[nombreLimpio])
+    return RUTA_ICONS[nombreLimpio]
   }
   
-  // Buscar coincidencia parcial (case insensitive)
-  const nombreLower = nombreRuta.toLowerCase()
+  // Buscar coincidencia parcial (case insensitive) - PRIORITARIO
   for (const [key, icon] of Object.entries(RUTA_ICONS)) {
     if (key.toLowerCase() === nombreLower) {
+      console.log('✅ Encontrado por case-insensitive:', key, '→', icon)
       return icon
     }
   }
   
-  // Buscar por palabras clave
+  // Buscar por palabras clave (fallback)
   const palabrasClave = {
+    'doctores': 'ti ti-user-doctor',
+    'doctor': 'ti ti-user-doctor',
+    'salas': 'ti ti-building',
+    'sala': 'ti ti-building',
+    'etiquetas': 'ti ti-tags',
+    'etiqueta': 'ti ti-tags',
+    'modulos': 'ti ti-layout-grid',
+    'módulos': 'ti ti-layout-grid',
+    'modulo': 'ti ti-layout-grid',
     'usuario': 'ti ti-user',
     'rol': 'ti ti-user-shield',
     'permiso': 'ti ti-lock-access',
@@ -168,7 +192,6 @@ export function getRutaIcon(nombreRuta) {
     'plantilla': 'ti ti-file-text',
     'horario': 'ti ti-clock',
     'clinica': 'ti ti-building-hospital',
-    'modulo': 'ti ti-layout-grid',
     'paciente': 'ti ti-users',
     'cita': 'ti ti-calendar',
     'tratamiento': 'ti ti-dental',
@@ -183,11 +206,13 @@ export function getRutaIcon(nombreRuta) {
   
   for (const [palabra, icon] of Object.entries(palabrasClave)) {
     if (nombreLower.includes(palabra)) {
+      console.log('✅ Encontrado por palabra clave:', palabra, '→', icon)
       return icon
     }
   }
   
   // Icono por defecto
+  console.log('⚠️ No encontrado, usando icono por defecto para:', nombreRuta)
   return 'ti ti-point'
 }
 

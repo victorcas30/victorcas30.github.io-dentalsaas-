@@ -125,9 +125,9 @@ export default function HorizontalSidebar() {
       position: 'sticky',
       top: 0,
       zIndex: 90,
-      background: 'white',
-      borderBottom: '1px solid #ebf1f6',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+      background: 'var(--horizontal-menu-bg)',
+      borderBottom: '1px solid var(--horizontal-menu-border)',
+      boxShadow: '0 2px 4px var(--horizontal-menu-shadow)'
     }}>
       <div style={{
         display: 'flex',
@@ -142,8 +142,8 @@ export default function HorizontalSidebar() {
           style={{
             padding: '15px 20px',
             textDecoration: 'none',
-            color: pathname === '/' ? '#1B84FF' : '#768B9E',
-            borderBottom: pathname === '/' ? '3px solid #1B84FF' : '3px solid transparent',
+            color: pathname === '/' ? 'var(--horizontal-menu-text-active)' : 'var(--horizontal-menu-text)',
+            borderBottom: pathname === '/' ? '3px solid var(--horizontal-menu-text-active)' : '3px solid transparent',
             fontWeight: pathname === '/' ? 600 : 400,
             display: 'flex',
             alignItems: 'center',
@@ -180,8 +180,8 @@ export default function HorizontalSidebar() {
                 padding: '15px 20px',
                 background: 'none',
                 border: 'none',
-                borderBottom: openMenu === modulo.id_modulo ? '3px solid #1B84FF' : '3px solid transparent',
-                color: openMenu === modulo.id_modulo ? '#1B84FF' : '#768B9E',
+                borderBottom: openMenu === modulo.id_modulo ? '3px solid var(--horizontal-menu-text-active)' : '3px solid transparent',
+                color: openMenu === modulo.id_modulo ? 'var(--horizontal-menu-text-active)' : 'var(--horizontal-menu-text)',
                 cursor: 'pointer',
                 fontSize: '14px',
                 fontWeight: openMenu === modulo.id_modulo ? 600 : 400,
@@ -213,10 +213,10 @@ export default function HorizontalSidebar() {
                 position: 'absolute',
                   top: 'calc(100% - 16px)',
                 left: 0,
-                background: 'white',
-                border: '1px solid #ebf1f6',
+                background: 'var(--horizontal-menu-dropdown-bg)',
+                border: '1px solid var(--horizontal-menu-dropdown-border)',
                 borderRadius: '8px',
-                boxShadow: '0 5px 20px rgba(0,0,0,0.15)',
+                boxShadow: '0 5px 20px var(--horizontal-menu-dropdown-shadow)',
                 minWidth: '280px',
                 padding: '8px 0',
                 zIndex: 50,
@@ -234,24 +234,24 @@ export default function HorizontalSidebar() {
                         alignItems: 'center',
                         gap: '10px',
                         padding: '12px 20px',
-                        color: pathname === ruta.path ? '#1B84FF' : '#768B9E',
+                        color: pathname === ruta.path ? 'var(--horizontal-menu-text-active)' : 'var(--horizontal-menu-text)',
                         textDecoration: 'none',
                         transition: 'all 0.2s',
-                        background: pathname === ruta.path ? 'rgba(27, 132, 255, 0.1)' : 'transparent',
+                        background: pathname === ruta.path ? 'var(--horizontal-menu-dropdown-active-bg)' : 'transparent',
                         fontWeight: pathname === ruta.path ? 600 : 400
                       }}
                       onMouseEnter={(e) => {
                         if (pathname !== ruta.path) {
-                          e.currentTarget.style.background = '#f8f9fa'
+                          e.currentTarget.style.background = 'var(--horizontal-menu-dropdown-hover-bg)'
                           e.currentTarget.style.paddingLeft = '25px'
-                          e.currentTarget.style.color = '#1B84FF'
+                          e.currentTarget.style.color = 'var(--horizontal-menu-text-active)'
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (pathname !== ruta.path) {
                           e.currentTarget.style.background = 'transparent'
                           e.currentTarget.style.paddingLeft = '20px'
-                          e.currentTarget.style.color = '#768B9E'
+                          e.currentTarget.style.color = 'var(--horizontal-menu-text)'
                         }
                       }}
                     >

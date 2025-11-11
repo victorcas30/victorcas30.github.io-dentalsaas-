@@ -11,6 +11,16 @@
   --dental-info: #2cabe3;
   --dental-light: #f2f4f8;
   --dental-dark: #3A4752;
+  --horizontal-menu-bg: #ffffff;
+  --horizontal-menu-border: #ebf1f6;
+  --horizontal-menu-shadow: rgba(0, 0, 0, 0.05);
+  --horizontal-menu-text: #768B9E;
+  --horizontal-menu-text-active: #1B84FF;
+  --horizontal-menu-dropdown-bg: #ffffff;
+  --horizontal-menu-dropdown-border: #ebf1f6;
+  --horizontal-menu-dropdown-shadow: rgba(0, 0, 0, 0.15);
+  --horizontal-menu-dropdown-hover-bg: #f8f9fa;
+  --horizontal-menu-dropdown-active-bg: rgba(27, 132, 255, 0.1);
 }
 
 /* Configuración global */
@@ -565,6 +575,16 @@ body {
 [data-bs-theme="dark"] {
   background-color: #192838;
   color: #7c8fac;
+  --horizontal-menu-bg: #152332;
+  --horizontal-menu-border: #233143;
+  --horizontal-menu-shadow: rgba(0, 0, 0, 0.35);
+  --horizontal-menu-text: #93a4c1;
+  --horizontal-menu-text-active: #73b0ff;
+  --horizontal-menu-dropdown-bg: #1a2b3b;
+  --horizontal-menu-dropdown-border: #233143;
+  --horizontal-menu-dropdown-shadow: rgba(0, 0, 0, 0.4);
+  --horizontal-menu-dropdown-hover-bg: #24364d;
+  --horizontal-menu-dropdown-active-bg: rgba(27, 132, 255, 0.18);
 }
 
 [data-bs-theme="dark"] .card {

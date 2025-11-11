@@ -1,4 +1,4 @@
-/**
+  /**
  * Diccionario de iconos para módulos y rutas del menú
  * Basado en Tabler Icons (ti ti-*)
  */
@@ -28,7 +28,7 @@ export const MODULO_ICONS = {
   'Estadísticas': 'ti ti-chart-line',
   'Dashboard': 'ti ti-layout-dashboard',
   'Etiquetas': 'ti ti-tags',
-  'Doctores': 'ti ti-user-doctor',
+  'Doctores': 'ti ti-stethoscope',
   'Salas': 'ti ti-building'
 }
 
@@ -76,8 +76,8 @@ export const RUTA_ICONS = {
   // Servicios y Clínica
   'Servicios': 'ti ti-medical-cross',
   'Especialidades': 'ti ti-stethoscope',
-  'Doctores': 'ti ti-user-doctor',
-  'Doctor': 'ti ti-user-doctor',
+  'Doctores': 'ti ti-stethoscope',
+  'Doctor': 'ti ti-stethoscope',
   'Consultorios': 'ti ti-building',
   'Salas': 'ti ti-building',
   'Sala': 'ti ti-building',
@@ -176,8 +176,8 @@ export function getRutaIcon(nombreRuta) {
   
   // Buscar por palabras clave (fallback)
   const palabrasClave = {
-    'doctores': 'ti ti-user-doctor',
-    'doctor': 'ti ti-user-doctor',
+    'doctores': 'ti ti-stethoscope',
+    'doctor': 'ti ti-stethoscope',
     'salas': 'ti ti-building',
     'sala': 'ti ti-building',
     'etiquetas': 'ti ti-tags',

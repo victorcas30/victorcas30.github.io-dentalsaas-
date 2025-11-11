@@ -144,7 +144,7 @@ export default function Doctores() {
           <div className="d-flex align-items-center justify-content-between mb-4">
             <div>
               <h2 className="fw-bold mb-2">
-                <i className="ti ti-user-doctor me-2"></i>
+                <i className="ti ti-stethoscope me-2"></i>
                 Doctores
               </h2>
               <p className="text-muted mb-0">
@@ -197,7 +197,7 @@ export default function Doctores() {
                         <div className="d-flex align-items-center gap-2">
                           <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
                                style={{width: '40px', height: '40px', fontSize: '18px'}}>
-                            <i className="ti ti-user-doctor"></i>
+                            <i className="ti ti-stethoscope"></i>
                           </div>
                           <div>
                             <div className="fw-semibold">{doctor.nombre_titulo || doctor.nombre}</div>

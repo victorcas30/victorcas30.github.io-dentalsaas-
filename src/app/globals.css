@@ -592,6 +592,63 @@ body {
   color: #eaeff4;
 }
 
+[data-bs-theme="dark"] .card-header.bg-white {
+  background-color: #1f2d3d !important;
+  border-bottom-color: #2a3a52 !important;
+  color: #eaeff4;
+}
+
+[data-bs-theme="dark"] .bg-light {
+  background-color: #24354a !important;
+  color: #eaeff4 !important;
+}
+
+[data-bs-theme="dark"] .table thead.table-light,
+[data-bs-theme="dark"] .table thead.table-light th {
+  background-color: #22344a;
+  color: #eaeff4;
+}
+
+[data-bs-theme="dark"] .table tbody tr {
+  background-color: #152332;
+}
+
+[data-bs-theme="dark"] .table tbody tr:nth-child(odd) {
+  background-color: #1a2b3b;
+}
+
+[data-bs-theme="dark"] .list-group-item {
+  background-color: #152332;
+  color: #eaeff4;
+  border-color: #26364b;
+}
+
+[data-bs-theme="dark"] .list-group-item:hover {
+  background-color: #1f2d3d;
+}
+
+[data-bs-theme="dark"] .list-group-item.active {
+  background-color: #1B84FF;
+  border-color: #1B84FF;
+  color: #ffffff;
+}
+
+[data-bs-theme="dark"] code,
+[data-bs-theme="dark"] .code {
+  background-color: #1f2d3d !important;
+  color: #9cd5ff !important;
+}
+
+[data-bs-theme="dark"] .alert-info {
+  background-color: rgba(44, 171, 227, 0.08);
+  color: #7cc9ff;
+}
+
+[data-bs-theme="dark"] .badge.bg-danger {
+  background-color: rgba(248, 40, 90, 0.2) !important;
+  color: #ff7898 !important;
+}
+
 [data-bs-theme="dark"] .table-hover tbody tr:hover {
   background-color: #1a2632;
 }

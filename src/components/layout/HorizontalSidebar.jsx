@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { authService } from '@/services/authService'
 import { getModuloIcon, getRutaIcon } from '@/utils/menuIcons'
 
@@ -10,12 +10,115 @@ export default function HorizontalSidebar() {
   const pathname = usePathname()
   const [modulos, setModulos] = useState([])
   const [openMenu, setOpenMenu] = useState(null)
+  const closeTimeoutRef = useRef(null)
 
   useEffect(() => {
     const userModulos = authService.getModulos()
     setModulos(userModulos)
     console.log('📦 MÓDULOS:', userModulos)
   }, [])
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const cancelCloseMenu = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+  }
+
+  const queueCloseMenu = (event) => {
+    const currentTarget = event?.currentTarget
+    const relatedTarget = event?.relatedTarget
+    const debugInfo = {
+      currentTag: currentTarget?.tagName,
+      currentDropdown: currentTarget?.dataset?.dropdown,
+      relatedTag: relatedTarget?.tagName,
+      clientX: event?.clientX,
+      clientY: event?.clientY
+    }
+    console.log('🧐 queueCloseMenu triggered', debugInfo)
+
+    if (
+      currentTarget instanceof Node &&
+      relatedTarget instanceof Node &&
+      currentTarget.contains(relatedTarget)
+    ) {
+      console.log('🛑 Abort close: related target aún dentro del contenedor')
+      return
+    }
+
+    if (currentTarget instanceof HTMLElement) {
+      const rect = currentTarget.getBoundingClientRect()
+      const isDropdown = currentTarget.dataset?.dropdown === 'true'
+      const leavingBottom = event.clientY >= rect.bottom
+
+      if (!isDropdown && leavingBottom) {
+        const dropdownEl = currentTarget.querySelector('[data-dropdown="true"]')
+
+        if (dropdownEl instanceof HTMLElement) {
+          const dropdownRect = dropdownEl.getBoundingClientRect()
+
+          const withinDropdownHorizontal =
+            event.clientX >= dropdownRect.left - 32 &&
+            event.clientX <= dropdownRect.right + 32
+
+          if (withinDropdownHorizontal) {
+            console.log('✅ Cancel close: cursor se dirige al dropdown', {
+              dropdownRect,
+              eventX: event.clientX,
+              eventY: event.clientY
+            })
+            cancelCloseMenu()
+            return
+          }
+        }
+
+        // Si no hay dropdown o el cursor sale fuera del rango esperado, continuar con el cierre
+      }
+
+      if (isDropdown && leavingBottom) {
+        // Permitir que el dropdown maneje el cierre normalmente
+      }
+
+      if (!isDropdown && event.clientY <= rect.top) {
+        console.log('✅ Cancel close: cursor regresó por la parte superior')
+        return
+      }
+
+      if (isDropdown) {
+        const leavingTop = event.clientY <= rect.top
+        const relatedElement = relatedTarget instanceof HTMLElement ? relatedTarget : null
+        const relatedMenuRoot = relatedElement?.closest('[data-menu-root="true"]')
+        const currentMenuRoot = currentTarget.parentElement
+
+        if (leavingTop && relatedElement) {
+          const isSameMenuRoot = relatedMenuRoot === currentMenuRoot
+          const isButton = relatedElement.tagName === 'BUTTON'
+
+          if (isSameMenuRoot || isButton) {
+            console.log('✅ Cancel close: cursor regresó del dropdown al botón del mismo módulo')
+            cancelCloseMenu()
+            return
+          }
+        }
+      }
+    }
+
+    console.log('⏳ Programando cierre del submenú')
+    cancelCloseMenu()
+    closeTimeoutRef.current = setTimeout(() => {
+      console.log('❌ Cerrando submenú por timeout')
+      setOpenMenu(null)
+      closeTimeoutRef.current = null
+    }, 220)
+  }
 
   return (
     <div className="d-none d-xl-block" style={{
@@ -56,14 +159,19 @@ export default function HorizontalSidebar() {
         {modulos.map((modulo) => (
           <div 
             key={modulo.id_modulo}
-            style={{ position: 'relative' }}
+            style={{ 
+              position: 'relative',
+              paddingBottom: openMenu === modulo.id_modulo ? '16px' : '0px'
+            }}
+            data-menu-root="true"
             onMouseEnter={() => {
+              cancelCloseMenu()
               console.log('✅ HOVER EN:', modulo.modulo)
               setOpenMenu(modulo.id_modulo)
             }}
-            onMouseLeave={() => {
+            onMouseLeave={(event) => {
               console.log('❌ SALIÓ DE:', modulo.modulo)
-              setTimeout(() => setOpenMenu(null), 100)
+              queueCloseMenu(event)
             }}
           >
             <button
@@ -97,9 +205,13 @@ export default function HorizontalSidebar() {
 
             {/* DROPDOWN */}
             {openMenu === modulo.id_modulo && (
-              <div style={{
+              <div
+                data-dropdown="true"
+                onMouseEnter={cancelCloseMenu}
+                onMouseLeave={(event) => queueCloseMenu(event)}
+                style={{
                 position: 'absolute',
-                top: '100%',
+                  top: 'calc(100% - 16px)',
                 left: 0,
                 background: 'white',
                 border: '1px solid #ebf1f6',

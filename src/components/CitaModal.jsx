@@ -62,6 +62,8 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
         if (cita.paciente_nombres) {
           setBusquedaPaciente(`${cita.paciente_nombres} ${cita.paciente_apellidos}`)
         }
+        // Cerrar la lista de pacientes cuando se carga una cita para editar
+        setMostrarListaPacientes(false)
       } else {
         // Modo crear
         // Calcular hora fin (una hora después de la hora inicial)
@@ -93,6 +95,7 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
           recordatorio_automatico: false
         })
         setBusquedaPaciente('')
+        setMostrarListaPacientes(false)
       }
       setConflictoHorario(null)
     }
@@ -108,12 +111,19 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
                p.email?.toLowerCase().includes(busqueda)
       })
       setPacientesFiltrados(filtrados)
-      setMostrarListaPacientes(true)
+      // Solo mostrar la lista si está activa (usuario hizo focus o está escribiendo)
+      // Esto evita que se abra automáticamente al cargar una cita para editar
+      if (mostrarListaPacientes && filtrados.length > 0) {
+        // La lista ya está activa, solo actualizar los filtrados
+      } else if (filtrados.length > 0) {
+        // Si hay resultados pero la lista no está activa, no hacer nada
+        // (esto evita que se abra al cargar una cita)
+      }
     } else {
       setPacientesFiltrados([])
       setMostrarListaPacientes(false)
     }
-  }, [busquedaPaciente, pacientes])
+  }, [busquedaPaciente, pacientes, mostrarListaPacientes])
 
   useEffect(() => {
     // Verificar conflictos de horario cuando cambian fecha, hora o doctor
@@ -317,7 +327,13 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
                       className="form-control"
                       placeholder="Buscar o agregar..."
                       value={busquedaPaciente}
-                      onChange={(e) => setBusquedaPaciente(e.target.value)}
+                      onChange={(e) => {
+                        setBusquedaPaciente(e.target.value)
+                        // Activar la lista cuando el usuario escribe
+                        if (e.target.value) {
+                          setMostrarListaPacientes(true)
+                        }
+                      }}
                       onFocus={() => setMostrarListaPacientes(true)}
                     />
                     {mostrarListaPacientes && pacientesFiltrados.length > 0 && (

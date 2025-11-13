@@ -29,6 +29,20 @@ export default function RootLayout({ children }) {
           href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" 
           rel="stylesheet"
         />
+        
+        {/* FullCalendar CSS */}
+        <link 
+          href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/main.min.css" 
+          rel="stylesheet"
+        />
+        <link 
+          href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/main.min.css" 
+          rel="stylesheet"
+        />
+        <link 
+          href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.19/main.min.css" 
+          rel="stylesheet"
+        />
       </head>
       <body>
         {children}

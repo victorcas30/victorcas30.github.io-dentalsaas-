@@ -8,7 +8,7 @@ import { citasService } from '@/services/citasService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI } from '@/utils/sweetAlertHelper'
 
-export default function CitaModal({ show, onClose, cita = null, onSave, fechaInicial = null }) {
+export default function CitaModal({ show, onClose, cita = null, onSave, fechaInicial = null, horaInicial = null }) {
   const [loading, setLoading] = useState(false)
   const [pacientes, setPacientes] = useState([])
   const [doctores, setDoctores] = useState([])
@@ -64,13 +64,29 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
         }
       } else {
         // Modo crear
+        // Calcular hora fin (una hora después de la hora inicial)
+        let horaInicio = '10:00'
+        let horaFin = '11:00'
+        
+        if (horaInicial) {
+          horaInicio = horaInicial
+          // Calcular hora fin: una hora después
+          const [horas, minutos] = horaInicial.split(':').map(Number)
+          const fechaHora = new Date()
+          fechaHora.setHours(horas, minutos, 0, 0)
+          fechaHora.setHours(fechaHora.getHours() + 1)
+          const horasFin = String(fechaHora.getHours()).padStart(2, '0')
+          const minutosFin = String(fechaHora.getMinutes()).padStart(2, '0')
+          horaFin = `${horasFin}:${minutosFin}`
+        }
+        
         setFormData({
           id_paciente: '',
           id_doctor: '',
           id_sala: '',
           fecha: fechaInicial || new Date().toISOString().split('T')[0],
-          hora_inicio: '10:00',
-          hora_fin: '10:45',
+          hora_inicio: horaInicio,
+          hora_fin: horaFin,
           motivo_cita: '',
           notas: '',
           estado: 'Programada',
@@ -80,7 +96,7 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
       }
       setConflictoHorario(null)
     }
-  }, [show, cita, fechaInicial])
+  }, [show, cita, fechaInicial, horaInicial])
 
   useEffect(() => {
     if (busquedaPaciente) {

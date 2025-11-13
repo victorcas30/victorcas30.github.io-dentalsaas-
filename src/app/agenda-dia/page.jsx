@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import HorizontalLayout from '@/components/layout/HorizontalLayout'
 import CitaModal from '@/components/CitaModal'
+import FullCalendarWrapper from '@/components/FullCalendarWrapper'
 import { citasService } from '@/services/citasService'
 import { authService } from '@/services/authService'
-import { mostrarErrorAPI, mostrarExito } from '@/utils/sweetAlertHelper'
+import { mostrarErrorAPI } from '@/utils/sweetAlertHelper'
+import '@/app/agenda-calendar.css'
 
 export default function AgendaDia() {
   const router = useRouter()
@@ -15,6 +17,8 @@ export default function AgendaDia() {
   const [fechaActual, setFechaActual] = useState(new Date())
   const [showModal, setShowModal] = useState(false)
   const [citaSeleccionada, setCitaSeleccionada] = useState(null)
+  const [fechaModal, setFechaModal] = useState(null)
+  const [horaInicialModal, setHoraInicialModal] = useState(null)
 
   const idClinica = authService.getClinicaId()
 
@@ -23,11 +27,9 @@ export default function AgendaDia() {
   }, [fechaActual])
 
   const normalizarFecha = (fecha) => {
-    // Si la fecha viene como string ISO completo, extraer solo la parte de fecha
     if (typeof fecha === 'string') {
       return fecha.split('T')[0]
     }
-    // Si es un objeto Date, convertir a string YYYY-MM-DD usando hora local
     if (fecha instanceof Date) {
       const año = fecha.getFullYear()
       const mes = String(fecha.getMonth() + 1).padStart(2, '0')
@@ -37,24 +39,144 @@ export default function AgendaDia() {
     return fecha
   }
 
+  const convertirCitasAEventos = useCallback((citas) => {
+    if (!citas || citas.length === 0) {
+      return []
+    }
+
+    return citas
+      .filter(cita => cita && cita.activo !== false) // Filtrar citas inactivas
+      .map(cita => {
+        try {
+          // Normalizar fecha
+          let fechaCita = normalizarFecha(cita.fecha)
+          
+          // Asegurar formato YYYY-MM-DD
+          if (typeof fechaCita === 'string' && fechaCita.includes('T')) {
+            fechaCita = fechaCita.split('T')[0]
+          }
+          
+          // Normalizar horas (formato HH:mm)
+          let horaInicio = '09:00'
+          let horaFin = '10:00'
+          
+          if (cita.hora_inicio) {
+            const horaInicioStr = cita.hora_inicio.toString()
+            if (horaInicioStr.includes(':')) {
+              horaInicio = horaInicioStr.substring(0, 5)
+            } else {
+              horaInicio = horaInicioStr.padStart(5, '0')
+            }
+          }
+          
+          if (cita.hora_fin) {
+            const horaFinStr = cita.hora_fin.toString()
+            if (horaFinStr.includes(':')) {
+              horaFin = horaFinStr.substring(0, 5)
+            } else {
+              horaFin = horaFinStr.padStart(5, '0')
+            }
+          }
+          
+          // Mapear estado a colores específicos
+          const coloresPorEstado = {
+            'Programada': {
+              className: 'primary',
+              backgroundColor: 'rgba(13, 110, 253, 0.15)',
+              borderColor: '#0d6efd',
+              textColor: '#0d6efd'
+            },
+            'Confirmada': {
+              className: 'info',
+              backgroundColor: 'rgba(13, 202, 240, 0.15)',
+              borderColor: '#0dcaf0',
+              textColor: '#0dcaf0'
+            },
+            'En Proceso': {
+              className: 'warning',
+              backgroundColor: 'rgba(255, 193, 7, 0.15)',
+              borderColor: '#ffc107',
+              textColor: '#ffc107'
+            },
+            'Completada': {
+              className: 'success',
+              backgroundColor: 'rgba(25, 135, 84, 0.15)',
+              borderColor: '#198754',
+              textColor: '#198754'
+            },
+            'Cancelada': {
+              className: 'danger',
+              backgroundColor: 'rgba(220, 53, 69, 0.15)',
+              borderColor: '#dc3545',
+              textColor: '#dc3545'
+            },
+            'No Asistió': {
+              className: 'secondary',
+              backgroundColor: 'rgba(108, 117, 125, 0.15)',
+              borderColor: '#6c757d',
+              textColor: '#6c757d'
+            }
+          }
+
+          const colores = coloresPorEstado[cita.estado] || coloresPorEstado['Programada']
+
+          // Crear fecha/hora ISO para FullCalendar
+          const startDateTime = `${fechaCita}T${horaInicio}:00`
+          const endDateTime = `${fechaCita}T${horaFin}:00`
+
+          const nombreCompleto = `${cita.paciente_nombres || ''} ${cita.paciente_apellidos || ''}`.trim() || 'Sin nombre'
+          const doctorCompleto = `${cita.doctor_titulo || 'Dr.'} ${cita.doctor_nombres || ''} ${cita.doctor_apellidos || ''}`.trim()
+          const tooltipText = `${nombreCompleto}\n${horaInicio} - ${horaFin}\n${doctorCompleto}\n${cita.sala_nombre || 'Sin sala'}\n${cita.estado || 'Programada'}`
+
+          return {
+            id: cita.id_cita?.toString() || `cita-${Date.now()}-${Math.random()}`,
+            title: nombreCompleto,
+            start: startDateTime,
+            end: endDateTime,
+            allDay: false,
+            extendedProps: {
+              cita: cita,
+              estado: cita.estado,
+              doctor: doctorCompleto,
+              sala: cita.sala_nombre || 'Sin sala',
+              motivo: cita.motivo_cita || 'Sin motivo',
+              notas: cita.notas || '',
+              horaInicio: horaInicio,
+              horaFin: horaFin
+            },
+            className: `event-fc-color fc-bg-${colores.className}`,
+            backgroundColor: colores.backgroundColor,
+            borderColor: colores.borderColor,
+            textColor: colores.textColor,
+            'data-tooltip': tooltipText
+          }
+        } catch (error) {
+          console.error('Error al convertir cita a evento:', error, cita)
+          return null
+        }
+      })
+      .filter(evento => evento !== null) // Filtrar errores
+  }, [])
+
+  const eventosCalendario = useMemo(() => {
+    return convertirCitasAEventos(citas)
+  }, [citas, convertirCitasAEventos])
+
+  const headerToolbarConfig = useMemo(() => ({
+    left: 'prev,next today',
+    center: 'title',
+    right: ''
+  }), [])
+
   const cargarCitas = async () => {
     try {
       setLoading(true)
       const todasLasCitas = await citasService.listarPorClinica(idClinica)
       
-      // Filtrar citas del día actual y activas
-      // Usar fecha local sin conversión a UTC para evitar problemas de zona horaria
       const fechaStr = normalizarFecha(fechaActual)
       const citasDelDia = todasLasCitas.filter(cita => {
         const fechaCita = normalizarFecha(cita.fecha)
         return fechaCita === fechaStr && cita.activo !== false
-      })
-      
-      // Ordenar por hora de inicio
-      citasDelDia.sort((a, b) => {
-        const horaA = a.hora_inicio || '00:00:00'
-        const horaB = b.hora_inicio || '00:00:00'
-        return horaA.localeCompare(horaB)
       })
       
       setCitas(citasDelDia)
@@ -66,18 +188,10 @@ export default function AgendaDia() {
     }
   }
 
-  const cambiarFecha = (dias) => {
-    const nuevaFecha = new Date(fechaActual)
-    nuevaFecha.setDate(nuevaFecha.getDate() + dias)
-    setFechaActual(nuevaFecha)
-  }
-
-  const irAHoy = () => {
-    setFechaActual(new Date())
-  }
-
-  const abrirModalNuevaCita = () => {
+  const abrirModalNuevaCita = (fecha = null, horaInicio = null) => {
     setCitaSeleccionada(null)
+    setFechaModal(fecha)
+    setHoraInicialModal(horaInicio)
     setShowModal(true)
   }
 
@@ -89,11 +203,45 @@ export default function AgendaDia() {
   const cerrarModal = () => {
     setShowModal(false)
     setCitaSeleccionada(null)
+    setFechaModal(null)
+    setHoraInicialModal(null)
   }
 
   const handleGuardarCita = () => {
     cargarCitas()
   }
+
+  const handleEventClick = useCallback((info) => {
+    const cita = info.event.extendedProps.cita
+    if (cita) {
+      abrirModalEditarCita(cita)
+    }
+  }, [])
+
+  const handleDateChange = useCallback((info) => {
+    const nuevaFecha = new Date(info.start)
+    // Solo actualizar si la fecha realmente cambió
+    setFechaActual(prev => {
+      const prevStr = normalizarFecha(prev)
+      const nuevaStr = normalizarFecha(nuevaFecha)
+      if (prevStr !== nuevaStr) {
+        return nuevaFecha
+      }
+      return prev
+    })
+  }, [])
+
+  const handleSelect = useCallback((info) => {
+    const fechaSeleccionada = normalizarFecha(info.start)
+    
+    // Extraer la hora del click
+    const fechaHora = new Date(info.start)
+    const horas = String(fechaHora.getHours()).padStart(2, '0')
+    const minutos = String(fechaHora.getMinutes()).padStart(2, '0')
+    const horaInicio = `${horas}:${minutos}`
+    
+    abrirModalNuevaCita(fechaSeleccionada, horaInicio)
+  }, [])
 
   const formatearFecha = (fecha) => {
     return fecha.toLocaleDateString('es-SV', { 
@@ -104,22 +252,7 @@ export default function AgendaDia() {
     })
   }
 
-  const formatearHora = (hora) => {
-    if (!hora) return ''
-    return hora.substring(0, 5)
-  }
-
-  const getColorEstado = (estado) => {
-    const colores = {
-      'Programada': 'primary',
-      'Confirmada': 'info',
-      'En Proceso': 'warning',
-      'Completada': 'success',
-      'Cancelada': 'danger',
-      'No Asistió': 'secondary'
-    }
-    return colores[estado] || 'secondary'
-  }
+  // Cargar módulos de FullCalendar dinámicamente
 
   return (
     <HorizontalLayout>
@@ -137,7 +270,7 @@ export default function AgendaDia() {
               </p>
             </div>
             <div className="d-flex gap-2">
-              <button className="btn btn-outline-primary" onClick={abrirModalNuevaCita}>
+              <button className="btn btn-outline-primary" onClick={() => abrirModalNuevaCita()}>
                 <i className="ti ti-plus me-2"></i>
                 Nueva cita
               </button>
@@ -148,121 +281,76 @@ export default function AgendaDia() {
 
       {/* Navegación entre vistas */}
       <div className="card mb-3">
-        <div className="card-body">
-          <div className="d-flex align-items-center justify-content-between">
-            <div className="btn-group" role="group">
+        <div className="card-header bg-white border-bottom">
+          <ul className="nav nav-tabs card-header-tabs" role="tablist">
+            <li className="nav-item">
               <button
                 type="button"
-                className="btn btn-primary"
+                className="nav-link active"
                 onClick={() => router.push('/agenda-dia')}
+                role="tab"
               >
                 <i className="ti ti-calendar me-2"></i>Día
               </button>
+            </li>
+            <li className="nav-item">
               <button
                 type="button"
-                className="btn btn-outline-primary"
+                className="nav-link"
                 onClick={() => router.push('/agenda-semana')}
+                role="tab"
               >
                 <i className="ti ti-calendar-week me-2"></i>Semana
               </button>
+            </li>
+            <li className="nav-item">
               <button
                 type="button"
-                className="btn btn-outline-primary"
+                className="nav-link"
                 onClick={() => router.push('/agenda-mes')}
+                role="tab"
               >
                 <i className="ti ti-calendar-month me-2"></i>Mes
               </button>
-            </div>
-
-            <div className="d-flex align-items-center gap-2">
-              <button
-                className="btn btn-outline-secondary"
-                onClick={() => cambiarFecha(-1)}
-              >
-                <i className="ti ti-chevron-left"></i>
-              </button>
-              <button
-                className="btn btn-outline-secondary"
-                onClick={irAHoy}
-              >
-                Hoy
-              </button>
-              <button
-                className="btn btn-outline-secondary"
-                onClick={() => cambiarFecha(1)}
-              >
-                <i className="ti ti-chevron-right"></i>
-              </button>
-            </div>
-          </div>
+            </li>
+          </ul>
         </div>
       </div>
 
-      {/* Lista de citas del día */}
+      {/* Calendario FullCalendar */}
       <div className="card">
-        <div className="card-body">
+        <div className="card-body p-0">
           {loading ? (
             <div className="text-center py-5">
               <div className="spinner-border text-primary"></div>
               <p className="mt-3 text-muted">Cargando citas...</p>
             </div>
-          ) : citas.length === 0 ? (
-            <div className="text-center py-5">
-              <i className="ti ti-calendar-off" style={{fontSize: '64px', color: '#ccc'}}></i>
-              <h4 className="mt-3 mb-2">No hay citas programadas</h4>
-              <p className="text-muted mb-3">
-                No hay citas programadas para este día
-              </p>
-              <button className="btn btn-primary" onClick={abrirModalNuevaCita}>
-                <i className="ti ti-plus me-2"></i>Crear primera cita
-              </button>
-            </div>
           ) : (
-            <div className="list-group">
-              {citas.map((cita) => (
-                <div
-                  key={cita.id_cita}
-                  className="list-group-item list-group-item-action"
-                  style={{cursor: 'pointer'}}
-                  onClick={() => abrirModalEditarCita(cita)}
-                >
-                  <div className="d-flex align-items-start justify-content-between">
-                    <div className="flex-grow-1">
-                      <div className="d-flex align-items-center gap-3 mb-2">
-                        <div className="fw-bold text-primary" style={{minWidth: '80px'}}>
-                          {formatearHora(cita.hora_inicio)} - {formatearHora(cita.hora_fin)}
-                        </div>
-                        <div>
-                          <h6 className="mb-1">
-                            {cita.paciente_nombres} {cita.paciente_apellidos}
-                          </h6>
-                          <div className="text-muted small">
-                            {cita.doctor_titulo || 'Dr.'} {cita.doctor_nombres} {cita.doctor_apellidos}
-                            {cita.sala_nombre && ` • ${cita.sala_nombre}`}
-                          </div>
-                        </div>
-                      </div>
-                      {cita.motivo_cita && (
-                        <div className="text-muted small mb-1">
-                          <i className="ti ti-file-text me-1"></i>
-                          {cita.motivo_cita}
-                        </div>
-                      )}
-                      {cita.notas && (
-                        <div className="text-muted small">
-                          <i className="ti ti-note me-1"></i>
-                          {cita.notas}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <span className={`badge bg-${getColorEstado(cita.estado)}`}>
-                        {cita.estado}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="p-4 calender-sidebar app-calendar">
+              <FullCalendarWrapper
+                initialView="timeGridDay"
+                initialDate={fechaActual}
+                headerToolbar={headerToolbarConfig}
+                events={eventosCalendario}
+                eventClick={handleEventClick}
+                selectable={true}
+                selectMirror={true}
+                select={handleSelect}
+                datesSet={handleDateChange}
+                height="auto"
+                slotMinTime="06:00:00"
+                slotMaxTime="22:00:00"
+                slotDuration="00:30:00"
+                firstDay={1}
+                eventDisplay="block"
+                dayHeaderFormat={{ weekday: 'long' }}
+                slotLabelFormat={{
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: false
+                }}
+                locale="es"
+              />
             </div>
           )}
         </div>
@@ -274,9 +362,9 @@ export default function AgendaDia() {
         onClose={cerrarModal}
         cita={citaSeleccionada}
         onSave={handleGuardarCita}
-        fechaInicial={normalizarFecha(fechaActual)}
+        fechaInicial={fechaModal || normalizarFecha(fechaActual)}
+        horaInicial={horaInicialModal}
       />
     </HorizontalLayout>
   )
 }
-

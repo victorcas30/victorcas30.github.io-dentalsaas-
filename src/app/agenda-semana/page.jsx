@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import HorizontalLayout from '@/components/layout/HorizontalLayout'
 import CitaModal from '@/components/CitaModal'
+import FullCalendarWrapper from '@/components/FullCalendarWrapper'
 import { citasService } from '@/services/citasService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI } from '@/utils/sweetAlertHelper'
+import '@/app/agenda-calendar.css'
 
 export default function AgendaSemana() {
   const router = useRouter()
@@ -14,28 +16,165 @@ export default function AgendaSemana() {
   const [loading, setLoading] = useState(true)
   const [fechaInicioSemana, setFechaInicioSemana] = useState(() => {
     const hoy = new Date()
-    const lunes = new Date(hoy)
     const dia = hoy.getDay()
-    const diff = hoy.getDate() - dia + (dia === 0 ? -6 : 1) // Ajustar al lunes
+    const diff = hoy.getDate() - dia + (dia === 0 ? -6 : 1)
+    const lunes = new Date(hoy)
     lunes.setDate(diff)
     return lunes
   })
   const [showModal, setShowModal] = useState(false)
   const [citaSeleccionada, setCitaSeleccionada] = useState(null)
   const [fechaModal, setFechaModal] = useState(null)
-
+  const [horaInicialModal, setHoraInicialModal] = useState(null)
   const idClinica = authService.getClinicaId()
 
   useEffect(() => {
     cargarCitas()
   }, [fechaInicioSemana])
 
+  const normalizarFecha = (fecha) => {
+    if (typeof fecha === 'string') {
+      return fecha.split('T')[0]
+    }
+    if (fecha instanceof Date) {
+      const año = fecha.getFullYear()
+      const mes = String(fecha.getMonth() + 1).padStart(2, '0')
+      const dia = String(fecha.getDate()).padStart(2, '0')
+      return `${año}-${mes}-${dia}`
+    }
+    return fecha
+  }
+
+  const convertirCitasAEventos = useCallback((citas) => {
+    if (!citas || citas.length === 0) {
+      return []
+    }
+
+    return citas
+      .filter(cita => cita && cita.activo !== false)
+      .map(cita => {
+        try {
+          let fechaCita = normalizarFecha(cita.fecha)
+          
+          if (typeof fechaCita === 'string' && fechaCita.includes('T')) {
+            fechaCita = fechaCita.split('T')[0]
+          }
+          
+          let horaInicio = '09:00'
+          let horaFin = '10:00'
+          
+          if (cita.hora_inicio) {
+            const horaInicioStr = cita.hora_inicio.toString()
+            if (horaInicioStr.includes(':')) {
+              horaInicio = horaInicioStr.substring(0, 5)
+            } else {
+              horaInicio = horaInicioStr.padStart(5, '0')
+            }
+          }
+          
+          if (cita.hora_fin) {
+            const horaFinStr = cita.hora_fin.toString()
+            if (horaFinStr.includes(':')) {
+              horaFin = horaFinStr.substring(0, 5)
+            } else {
+              horaFin = horaFinStr.padStart(5, '0')
+            }
+          }
+          
+          // Mapear estado a colores específicos
+          const coloresPorEstado = {
+            'Programada': {
+              className: 'primary',
+              backgroundColor: 'rgba(13, 110, 253, 0.15)',
+              borderColor: '#0d6efd',
+              textColor: '#0d6efd'
+            },
+            'Confirmada': {
+              className: 'info',
+              backgroundColor: 'rgba(13, 202, 240, 0.15)',
+              borderColor: '#0dcaf0',
+              textColor: '#0dcaf0'
+            },
+            'En Proceso': {
+              className: 'warning',
+              backgroundColor: 'rgba(255, 193, 7, 0.15)',
+              borderColor: '#ffc107',
+              textColor: '#ffc107'
+            },
+            'Completada': {
+              className: 'success',
+              backgroundColor: 'rgba(25, 135, 84, 0.15)',
+              borderColor: '#198754',
+              textColor: '#198754'
+            },
+            'Cancelada': {
+              className: 'danger',
+              backgroundColor: 'rgba(220, 53, 69, 0.15)',
+              borderColor: '#dc3545',
+              textColor: '#dc3545'
+            },
+            'No Asistió': {
+              className: 'secondary',
+              backgroundColor: 'rgba(108, 117, 125, 0.15)',
+              borderColor: '#6c757d',
+              textColor: '#6c757d'
+            }
+          }
+
+          const colores = coloresPorEstado[cita.estado] || coloresPorEstado['Programada']
+
+          const startDateTime = `${fechaCita}T${horaInicio}:00`
+          const endDateTime = `${fechaCita}T${horaFin}:00`
+
+          const nombreCompleto = `${cita.paciente_nombres || ''} ${cita.paciente_apellidos || ''}`.trim() || 'Sin nombre'
+          const doctorCompleto = `${cita.doctor_titulo || 'Dr.'} ${cita.doctor_nombres || ''} ${cita.doctor_apellidos || ''}`.trim()
+          const tooltipText = `${nombreCompleto}\n${horaInicio} - ${horaFin}\n${doctorCompleto}\n${cita.sala_nombre || 'Sin sala'}\n${cita.estado || 'Programada'}`
+
+          return {
+            id: cita.id_cita?.toString() || `cita-${Date.now()}-${Math.random()}`,
+            title: nombreCompleto,
+            start: startDateTime,
+            end: endDateTime,
+            allDay: false,
+            extendedProps: {
+              cita: cita,
+              estado: cita.estado,
+              doctor: doctorCompleto,
+              sala: cita.sala_nombre || 'Sin sala',
+              motivo: cita.motivo_cita || 'Sin motivo',
+              notas: cita.notas || '',
+              horaInicio: horaInicio,
+              horaFin: horaFin
+            },
+            className: `event-fc-color fc-bg-${colores.className}`,
+            backgroundColor: colores.backgroundColor,
+            borderColor: colores.borderColor,
+            textColor: colores.textColor,
+            'data-tooltip': tooltipText
+          }
+        } catch (error) {
+          console.error('Error al convertir cita a evento:', error, cita)
+          return null
+        }
+      })
+      .filter(evento => evento !== null)
+  }, [])
+
+  const eventosCalendario = useMemo(() => {
+    return convertirCitasAEventos(citas)
+  }, [citas, convertirCitasAEventos])
+
+  const headerToolbarConfig = useMemo(() => ({
+    left: 'prev,next today',
+    center: 'title',
+    right: ''
+  }), [])
+
   const cargarCitas = async () => {
     try {
       setLoading(true)
       const todasLasCitas = await citasService.listarPorClinica(idClinica)
       
-      // Filtrar citas de la semana actual y activas
       const fechaFinSemana = new Date(fechaInicioSemana)
       fechaFinSemana.setDate(fechaFinSemana.getDate() + 6)
       
@@ -54,24 +193,10 @@ export default function AgendaSemana() {
     }
   }
 
-  const cambiarSemana = (semanas) => {
-    const nuevaFecha = new Date(fechaInicioSemana)
-    nuevaFecha.setDate(nuevaFecha.getDate() + (semanas * 7))
-    setFechaInicioSemana(nuevaFecha)
-  }
-
-  const irASemanaActual = () => {
-    const hoy = new Date()
-    const dia = hoy.getDay()
-    const diff = hoy.getDate() - dia + (dia === 0 ? -6 : 1)
-    const lunes = new Date(hoy)
-    lunes.setDate(diff)
-    setFechaInicioSemana(lunes)
-  }
-
-  const abrirModalNuevaCita = (fecha = null) => {
+  const abrirModalNuevaCita = (fecha = null, horaInicio = null) => {
     setCitaSeleccionada(null)
     setFechaModal(fecha)
+    setHoraInicialModal(horaInicio)
     setShowModal(true)
   }
 
@@ -85,81 +210,44 @@ export default function AgendaSemana() {
     setShowModal(false)
     setCitaSeleccionada(null)
     setFechaModal(null)
+    setHoraInicialModal(null)
   }
 
   const handleGuardarCita = () => {
     cargarCitas()
   }
 
-  const obtenerDiasSemana = () => {
-    const dias = []
-    for (let i = 0; i < 7; i++) {
-      const fecha = new Date(fechaInicioSemana)
-      fecha.setDate(fecha.getDate() + i)
-      dias.push(fecha)
+  const handleEventClick = useCallback((info) => {
+    const cita = info.event.extendedProps.cita
+    if (cita) {
+      abrirModalEditarCita(cita)
     }
-    return dias
-  }
+  }, [])
 
-  const normalizarFecha = (fecha) => {
-    // Si la fecha viene como string ISO completo, extraer solo la parte de fecha
-    if (typeof fecha === 'string') {
-      return fecha.split('T')[0]
-    }
-    // Si es un objeto Date, convertir a string YYYY-MM-DD usando hora local
-    if (fecha instanceof Date) {
-      const año = fecha.getFullYear()
-      const mes = String(fecha.getMonth() + 1).padStart(2, '0')
-      const dia = String(fecha.getDate()).padStart(2, '0')
-      return `${año}-${mes}-${dia}`
-    }
-    return fecha
-  }
-
-  const obtenerCitasDelDia = (fecha) => {
-    const fechaStr = normalizarFecha(fecha)
-    return citas.filter(cita => {
-      const fechaCita = normalizarFecha(cita.fecha)
-      return fechaCita === fechaStr
+  const handleDateChange = useCallback((info) => {
+    const nuevaFecha = new Date(info.start)
+    // Solo actualizar si la fecha realmente cambió
+    setFechaInicioSemana(prev => {
+      const prevStr = normalizarFecha(prev)
+      const nuevaStr = normalizarFecha(nuevaFecha)
+      if (prevStr !== nuevaStr) {
+        return nuevaFecha
+      }
+      return prev
     })
-      .sort((a, b) => {
-        const horaA = a.hora_inicio || '00:00:00'
-        const horaB = b.hora_inicio || '00:00:00'
-        return horaA.localeCompare(horaB)
-      })
-  }
+  }, [])
 
-  const formatearFecha = (fecha) => {
-    return fecha.toLocaleDateString('es-SV', { 
-      weekday: 'short', 
-      day: 'numeric', 
-      month: 'short' 
-    })
-  }
-
-  const formatearHora = (hora) => {
-    if (!hora) return ''
-    return hora.substring(0, 5)
-  }
-
-  const getColorEstado = (estado) => {
-    const colores = {
-      'Programada': 'primary',
-      'Confirmada': 'info',
-      'En Proceso': 'warning',
-      'Completada': 'success',
-      'Cancelada': 'danger',
-      'No Asistió': 'secondary'
-    }
-    return colores[estado] || 'secondary'
-  }
-
-  const esHoy = (fecha) => {
-    const hoy = new Date()
-    return fecha.toDateString() === hoy.toDateString()
-  }
-
-  const diasSemana = obtenerDiasSemana()
+  const handleSelect = useCallback((info) => {
+    const fechaSeleccionada = normalizarFecha(info.start)
+    
+    // Extraer la hora del click
+    const fechaHora = new Date(info.start)
+    const horas = String(fechaHora.getHours()).padStart(2, '0')
+    const minutos = String(fechaHora.getMinutes()).padStart(2, '0')
+    const horaInicio = `${horas}:${minutos}`
+    
+    abrirModalNuevaCita(fechaSeleccionada, horaInicio)
+  }, [])
 
   return (
     <HorizontalLayout>
@@ -173,7 +261,7 @@ export default function AgendaSemana() {
                 Agenda - Semana
               </h2>
               <p className="text-muted mb-0">
-                {diasSemana[0].toLocaleDateString('es-SV', { day: 'numeric', month: 'long', year: 'numeric' })} - {diasSemana[6].toLocaleDateString('es-SV', { day: 'numeric', month: 'long', year: 'numeric' })}
+                {fechaInicioSemana.toLocaleDateString('es-SV', { day: 'numeric', month: 'long', year: 'numeric' })} - {new Date(fechaInicioSemana.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('es-SV', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
             <div className="d-flex gap-2">
@@ -188,57 +276,43 @@ export default function AgendaSemana() {
 
       {/* Navegación entre vistas */}
       <div className="card mb-3">
-        <div className="card-body">
-          <div className="d-flex align-items-center justify-content-between">
-            <div className="btn-group" role="group">
+        <div className="card-header bg-white border-bottom">
+          <ul className="nav nav-tabs card-header-tabs" role="tablist">
+            <li className="nav-item">
               <button
                 type="button"
-                className="btn btn-outline-primary"
+                className="nav-link"
                 onClick={() => router.push('/agenda-dia')}
+                role="tab"
               >
                 <i className="ti ti-calendar me-2"></i>Día
               </button>
+            </li>
+            <li className="nav-item">
               <button
                 type="button"
-                className="btn btn-primary"
+                className="nav-link active"
                 onClick={() => router.push('/agenda-semana')}
+                role="tab"
               >
                 <i className="ti ti-calendar-week me-2"></i>Semana
               </button>
+            </li>
+            <li className="nav-item">
               <button
                 type="button"
-                className="btn btn-outline-primary"
+                className="nav-link"
                 onClick={() => router.push('/agenda-mes')}
+                role="tab"
               >
                 <i className="ti ti-calendar-month me-2"></i>Mes
               </button>
-            </div>
-
-            <div className="d-flex align-items-center gap-2">
-              <button
-                className="btn btn-outline-secondary"
-                onClick={() => cambiarSemana(-1)}
-              >
-                <i className="ti ti-chevron-left"></i>
-              </button>
-              <button
-                className="btn btn-outline-secondary"
-                onClick={irASemanaActual}
-              >
-                Esta semana
-              </button>
-              <button
-                className="btn btn-outline-secondary"
-                onClick={() => cambiarSemana(1)}
-              >
-                <i className="ti ti-chevron-right"></i>
-              </button>
-            </div>
-          </div>
+            </li>
+          </ul>
         </div>
       </div>
 
-      {/* Calendario semanal */}
+      {/* Calendario FullCalendar */}
       <div className="card">
         <div className="card-body p-0">
           {loading ? (
@@ -247,67 +321,31 @@ export default function AgendaSemana() {
               <p className="mt-3 text-muted">Cargando citas...</p>
             </div>
           ) : (
-            <div className="row g-0">
-              {diasSemana.map((dia, index) => {
-                const citasDelDia = obtenerCitasDelDia(dia)
-                const esHoyDia = esHoy(dia)
-                
-                return (
-                  <div key={index} className="col border-end" style={{minHeight: '500px'}}>
-                    <div 
-                      className={`p-3 border-bottom ${esHoyDia ? 'bg-primary text-white' : 'bg-light'}`}
-                      style={{fontWeight: 'bold'}}
-                    >
-                      <div>{formatearFecha(dia)}</div>
-                      <div className="small">{dia.toLocaleDateString('es-SV', { day: 'numeric' })}</div>
-                    </div>
-                    <div className="p-2" style={{maxHeight: '450px', overflowY: 'auto'}}>
-                      {citasDelDia.length === 0 ? (
-                        <div className="text-center text-muted small py-3">
-                          Sin citas
-                        </div>
-                      ) : (
-                        citasDelDia.map((cita) => (
-                          <div
-                            key={cita.id_cita}
-                            className="card mb-2"
-                            style={{cursor: 'pointer'}}
-                            onClick={() => abrirModalEditarCita(cita)}
-                          >
-                            <div className="card-body p-2">
-                              <div className="small fw-bold text-primary mb-1">
-                                {formatearHora(cita.hora_inicio)} - {formatearHora(cita.hora_fin)}
-                              </div>
-                              <div className="small fw-semibold mb-1">
-                                {cita.paciente_nombres} {cita.paciente_apellidos}
-                              </div>
-                              <div className="small text-muted mb-1">
-                                {cita.doctor_titulo || 'Dr.'} {cita.doctor_nombres}
-                              </div>
-                              {cita.motivo_cita && (
-                                <div className="small text-muted mb-1">
-                                  {cita.motivo_cita}
-                                </div>
-                              )}
-                              <div>
-                                <span className={`badge bg-${getColorEstado(cita.estado)} small`}>
-                                  {cita.estado}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                      <button
-                        className="btn btn-sm btn-outline-primary w-100 mt-2"
-                        onClick={() => abrirModalNuevaCita(dia.toISOString().split('T')[0])}
-                      >
-                        <i className="ti ti-plus"></i>
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
+            <div className="p-4 calender-sidebar app-calendar">
+              <FullCalendarWrapper
+                initialView="timeGridWeek"
+                initialDate={fechaInicioSemana}
+                headerToolbar={headerToolbarConfig}
+                events={eventosCalendario}
+                eventClick={handleEventClick}
+                selectable={true}
+                selectMirror={true}
+                select={handleSelect}
+                datesSet={handleDateChange}
+                height="auto"
+                slotMinTime="06:00:00"
+                slotMaxTime="22:00:00"
+                slotDuration="00:30:00"
+                firstDay={1}
+                eventDisplay="block"
+                dayHeaderFormat={{ weekday: 'long' }}
+                slotLabelFormat={{
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: false
+                }}
+                locale="es"
+              />
             </div>
           )}
         </div>
@@ -320,8 +358,8 @@ export default function AgendaSemana() {
         cita={citaSeleccionada}
         onSave={handleGuardarCita}
         fechaInicial={fechaModal || (citaSeleccionada ? citaSeleccionada.fecha : null)}
+        horaInicial={horaInicialModal}
       />
     </HorizontalLayout>
   )
 }
-

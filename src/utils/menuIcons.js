@@ -60,6 +60,11 @@ export const RUTA_ICONS = {
   'Calendario': 'ti ti-calendar-event',
   'Recordatorios': 'ti ti-bell',
   
+  // Agenda
+  'Día': 'ti ti-calendar',
+  'Semana': 'ti ti-calendar-week',
+  'Mes': 'ti ti-calendar-month',
+  
   // Tratamientos
   'Tratamientos': 'ti ti-dental',
   'Planes de tratamiento': 'ti ti-clipboard-list',
@@ -201,7 +206,12 @@ export function getRutaIcon(nombreRuta) {
     'inventario': 'ti ti-package',
     'servicio': 'ti ti-medical-cross',
     'configuración': 'ti ti-settings',
-    'configuracion': 'ti ti-settings'
+    'configuracion': 'ti ti-settings',
+    'día': 'ti ti-calendar',
+    'dia': 'ti ti-calendar',
+    'semana': 'ti ti-calendar-week',
+    'mes': 'ti ti-calendar-month',
+    'agenda': 'ti ti-calendar-event'
   }
   
   for (const [palabra, icon] of Object.entries(palabrasClave)) {

@@ -1,60 +1,206 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import HorizontalLayout from '@/components/layout/HorizontalLayout'
 import CitaModal from '@/components/CitaModal'
+import FullCalendarWrapper from '@/components/FullCalendarWrapper'
 import { citasService } from '@/services/citasService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI } from '@/utils/sweetAlertHelper'
+import '@/app/agenda-calendar.css'
 
 export default function AgendaMes() {
   const router = useRouter()
   const [citas, setCitas] = useState([])
   const [loading, setLoading] = useState(true)
-  const [fechaActual, setFechaActual] = useState(new Date())
+  // Inicializar con la fecha actual en formato seguro - solo se usa para initialDate
+  const fechaInicial = useMemo(() => {
+    const hoy = new Date()
+    // Asegurar que usamos la fecha local, no UTC
+    return new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+  }, [])
+  // Estado para el título del mes (no afecta al calendario)
+  const [mesTitulo, setMesTitulo] = useState(() => {
+    const hoy = new Date()
+    return new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  })
   const [showModal, setShowModal] = useState(false)
   const [citaSeleccionada, setCitaSeleccionada] = useState(null)
   const [fechaModal, setFechaModal] = useState(null)
-
   const idClinica = authService.getClinicaId()
 
+  // Cargar todas las citas solo al montar
   useEffect(() => {
     cargarCitas()
-  }, [fechaActual])
+  }, [])
+
+  const normalizarFecha = (fecha) => {
+    if (typeof fecha === 'string') {
+      return fecha.split('T')[0]
+    }
+    if (fecha instanceof Date) {
+      const año = fecha.getFullYear()
+      const mes = String(fecha.getMonth() + 1).padStart(2, '0')
+      const dia = String(fecha.getDate()).padStart(2, '0')
+      return `${año}-${mes}-${dia}`
+    }
+    return fecha
+  }
+
+  const convertirCitasAEventos = useCallback((citas) => {
+    if (!citas || citas.length === 0) {
+      return []
+    }
+
+    return citas
+      .filter(cita => cita && cita.activo !== false)
+      .map(cita => {
+        try {
+          let fechaCita = normalizarFecha(cita.fecha)
+          
+          if (typeof fechaCita === 'string' && fechaCita.includes('T')) {
+            fechaCita = fechaCita.split('T')[0]
+          }
+          
+          let horaInicio = '09:00'
+          let horaFin = '10:00'
+          
+          if (cita.hora_inicio) {
+            const horaInicioStr = cita.hora_inicio.toString()
+            if (horaInicioStr.includes(':')) {
+              horaInicio = horaInicioStr.substring(0, 5)
+            } else {
+              horaInicio = horaInicioStr.padStart(5, '0')
+            }
+          }
+          
+          if (cita.hora_fin) {
+            const horaFinStr = cita.hora_fin.toString()
+            if (horaFinStr.includes(':')) {
+              horaFin = horaFinStr.substring(0, 5)
+            } else {
+              horaFin = horaFinStr.padStart(5, '0')
+            }
+          }
+          
+          // Mapear estado a colores específicos
+          const coloresPorEstado = {
+            'Programada': {
+              className: 'primary',
+              backgroundColor: 'rgba(13, 110, 253, 0.15)',
+              borderColor: '#0d6efd',
+              textColor: '#0d6efd'
+            },
+            'Confirmada': {
+              className: 'info',
+              backgroundColor: 'rgba(13, 202, 240, 0.15)',
+              borderColor: '#0dcaf0',
+              textColor: '#0dcaf0'
+            },
+            'En Proceso': {
+              className: 'warning',
+              backgroundColor: 'rgba(255, 193, 7, 0.15)',
+              borderColor: '#ffc107',
+              textColor: '#ffc107'
+            },
+            'Completada': {
+              className: 'success',
+              backgroundColor: 'rgba(25, 135, 84, 0.15)',
+              borderColor: '#198754',
+              textColor: '#198754'
+            },
+            'Cancelada': {
+              className: 'danger',
+              backgroundColor: 'rgba(220, 53, 69, 0.15)',
+              borderColor: '#dc3545',
+              textColor: '#dc3545'
+            },
+            'No Asistió': {
+              className: 'secondary',
+              backgroundColor: 'rgba(108, 117, 125, 0.15)',
+              borderColor: '#6c757d',
+              textColor: '#6c757d'
+            }
+          }
+
+          const colores = coloresPorEstado[cita.estado] || coloresPorEstado['Programada']
+
+          const startDateTime = `${fechaCita}T${horaInicio}:00`
+          const endDateTime = `${fechaCita}T${horaFin}:00`
+
+          const nombreCompleto = `${cita.paciente_nombres || ''} ${cita.paciente_apellidos || ''}`.trim() || 'Sin nombre'
+          const doctorCompleto = `${cita.doctor_titulo || 'Dr.'} ${cita.doctor_nombres || ''} ${cita.doctor_apellidos || ''}`.trim()
+          const tooltipText = `${nombreCompleto}\n${horaInicio} - ${horaFin}\n${doctorCompleto}\n${cita.sala_nombre || 'Sin sala'}\n${cita.estado || 'Programada'}`
+
+          return {
+            id: cita.id_cita?.toString() || `cita-${Date.now()}-${Math.random()}`,
+            title: `${nombreCompleto} - ${horaInicio}`,
+            start: startDateTime,
+            end: endDateTime,
+            allDay: false,
+            extendedProps: {
+              cita: cita,
+              estado: cita.estado,
+              doctor: doctorCompleto,
+              sala: cita.sala_nombre || 'Sin sala',
+              motivo: cita.motivo_cita || 'Sin motivo',
+              notas: cita.notas || '',
+              horaInicio: horaInicio,
+              horaFin: horaFin
+            },
+            className: `event-fc-color fc-bg-${colores.className}`,
+            backgroundColor: colores.backgroundColor,
+            borderColor: colores.borderColor,
+            textColor: colores.textColor,
+            'data-tooltip': tooltipText
+          }
+        } catch (error) {
+          console.error('Error al convertir cita a evento:', error, cita)
+          return null
+        }
+      })
+      .filter(evento => evento !== null)
+  }, [])
+
+  const eventosCalendario = useMemo(() => {
+    return convertirCitasAEventos(citas)
+  }, [citas, convertirCitasAEventos])
+
+  const headerToolbarConfig = useMemo(() => ({
+    left: 'prev,next today',
+    center: 'title',
+    right: ''
+  }), [])
 
   const cargarCitas = async () => {
     try {
       setLoading(true)
       const todasLasCitas = await citasService.listarPorClinica(idClinica)
       
-      // Filtrar citas del mes actual y activas
-      const año = fechaActual.getFullYear()
-      const mes = fechaActual.getMonth()
+      console.log('Total de citas recibidas:', todasLasCitas?.length || 0)
       
-      const citasMes = todasLasCitas.filter(cita => {
-        if (cita.activo === false) return false
-        const fechaCita = new Date(cita.fecha)
-        return fechaCita.getFullYear() === año && fechaCita.getMonth() === mes
+      // Filtrar solo las citas activas, pero NO filtrar por mes
+      // FullCalendar se encargará de mostrar solo las del mes visible
+      const citasActivas = todasLasCitas.filter(cita => {
+        if (!cita || cita.activo === false) return false
+        return true
       })
       
-      setCitas(citasMes)
+      console.log('Citas activas:', citasActivas.length)
+      console.log('Citas:', citasActivas.map(c => ({
+        id: c.id_cita,
+        paciente: `${c.paciente_nombres} ${c.paciente_apellidos}`,
+        fecha: c.fecha
+      })))
+      
+      setCitas(citasActivas)
     } catch (err) {
       console.error('Error al cargar citas:', err)
       await mostrarErrorAPI(err)
     } finally {
       setLoading(false)
     }
-  }
-
-  const cambiarMes = (meses) => {
-    const nuevaFecha = new Date(fechaActual)
-    nuevaFecha.setMonth(nuevaFecha.getMonth() + meses)
-    setFechaActual(nuevaFecha)
-  }
-
-  const irAMesActual = () => {
-    setFechaActual(new Date())
   }
 
   const abrirModalNuevaCita = (fecha = null) => {
@@ -75,78 +221,47 @@ export default function AgendaMes() {
     setFechaModal(null)
   }
 
-  const handleGuardarCita = () => {
-    cargarCitas()
+  const handleGuardarCita = async () => {
+    // Recargar todas las citas después de guardar
+    await cargarCitas()
   }
 
-  const obtenerDiasDelMes = () => {
-    const año = fechaActual.getFullYear()
-    const mes = fechaActual.getMonth()
-    
-    // Primer día del mes
-    const primerDia = new Date(año, mes, 1)
-    // Último día del mes
-    const ultimoDia = new Date(año, mes + 1, 0)
-    
-    // Día de la semana del primer día (0 = domingo, 1 = lunes, etc.)
-    const diaInicio = primerDia.getDay()
-    // Ajustar para que la semana empiece en lunes
-    const diaInicioAjustado = diaInicio === 0 ? 6 : diaInicio - 1
-    
-    const dias = []
-    
-    // Agregar días vacíos al inicio si el mes no empieza en lunes
-    for (let i = 0; i < diaInicioAjustado; i++) {
-      dias.push(null)
+  const handleEventClick = useCallback((info) => {
+    const cita = info.event.extendedProps.cita
+    if (cita) {
+      abrirModalEditarCita(cita)
     }
-    
-    // Agregar todos los días del mes
-    for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
-      dias.push(new Date(año, mes, dia))
-    }
-    
-    return dias
-  }
+  }, [])
 
-  const normalizarFecha = (fecha) => {
-    // Si la fecha viene como string ISO completo, extraer solo la parte de fecha
-    if (typeof fecha === 'string') {
-      return fecha.split('T')[0]
-    }
-    // Si es un objeto Date, convertir a string YYYY-MM-DD usando hora local
-    if (fecha instanceof Date) {
-      const año = fecha.getFullYear()
-      const mes = String(fecha.getMonth() + 1).padStart(2, '0')
-      const dia = String(fecha.getDate()).padStart(2, '0')
-      return `${año}-${mes}-${dia}`
-    }
-    return fecha
-  }
-
-  const obtenerCitasDelDia = (fecha) => {
-    if (!fecha) return []
-    const fechaStr = normalizarFecha(fecha)
-    return citas.filter(cita => {
-      const fechaCita = normalizarFecha(cita.fecha)
-      return fechaCita === fechaStr
+  const handleDateChange = useCallback((info) => {
+    // Actualizar solo el título del mes sin causar re-renderizados del calendario
+    const nuevaFecha = new Date(info.start)
+    setMesTitulo(prev => {
+      const prevAño = prev.getFullYear()
+      const prevMes = prev.getMonth()
+      const nuevaAño = nuevaFecha.getFullYear()
+      const nuevaMes = nuevaFecha.getMonth()
+      
+      // Solo actualizar si realmente cambió el mes/año para el título
+      if (prevAño !== nuevaAño || prevMes !== nuevaMes) {
+        // Crear nueva fecha sin hora para evitar problemas de zona horaria
+        return new Date(nuevaAño, nuevaMes, 1)
+      }
+      return prev
     })
-  }
+  }, [])
+
+  const handleSelect = useCallback((info) => {
+    const fechaSeleccionada = normalizarFecha(info.start)
+    abrirModalNuevaCita(fechaSeleccionada)
+  }, [])
 
   const formatearMes = () => {
-    return fechaActual.toLocaleDateString('es-SV', { 
+    return mesTitulo.toLocaleDateString('es-SV', { 
       month: 'long', 
       year: 'numeric' 
     })
   }
-
-  const esHoy = (fecha) => {
-    if (!fecha) return false
-    const hoy = new Date()
-    return fecha.toDateString() === hoy.toDateString()
-  }
-
-  const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
-  const diasDelMes = obtenerDiasDelMes()
 
   return (
     <HorizontalLayout>
@@ -175,57 +290,43 @@ export default function AgendaMes() {
 
       {/* Navegación entre vistas */}
       <div className="card mb-3">
-        <div className="card-body">
-          <div className="d-flex align-items-center justify-content-between">
-            <div className="btn-group" role="group">
+        <div className="card-header bg-white border-bottom">
+          <ul className="nav nav-tabs card-header-tabs" role="tablist">
+            <li className="nav-item">
               <button
                 type="button"
-                className="btn btn-outline-primary"
+                className="nav-link"
                 onClick={() => router.push('/agenda-dia')}
+                role="tab"
               >
                 <i className="ti ti-calendar me-2"></i>Día
               </button>
+            </li>
+            <li className="nav-item">
               <button
                 type="button"
-                className="btn btn-outline-primary"
+                className="nav-link"
                 onClick={() => router.push('/agenda-semana')}
+                role="tab"
               >
                 <i className="ti ti-calendar-week me-2"></i>Semana
               </button>
+            </li>
+            <li className="nav-item">
               <button
                 type="button"
-                className="btn btn-primary"
+                className="nav-link active"
                 onClick={() => router.push('/agenda-mes')}
+                role="tab"
               >
                 <i className="ti ti-calendar-month me-2"></i>Mes
               </button>
-            </div>
-
-            <div className="d-flex align-items-center gap-2">
-              <button
-                className="btn btn-outline-secondary"
-                onClick={() => cambiarMes(-1)}
-              >
-                <i className="ti ti-chevron-left"></i>
-              </button>
-              <button
-                className="btn btn-outline-secondary"
-                onClick={irAMesActual}
-              >
-                Este mes
-              </button>
-              <button
-                className="btn btn-outline-secondary"
-                onClick={() => cambiarMes(1)}
-              >
-                <i className="ti ti-chevron-right"></i>
-              </button>
-            </div>
-          </div>
+            </li>
+          </ul>
         </div>
       </div>
 
-      {/* Calendario mensual */}
+      {/* Calendario FullCalendar */}
       <div className="card">
         <div className="card-body p-0">
           {loading ? (
@@ -234,79 +335,24 @@ export default function AgendaMes() {
               <p className="mt-3 text-muted">Cargando citas...</p>
             </div>
           ) : (
-            <div>
-              {/* Encabezados de días de la semana */}
-              <div className="row g-0 border-bottom">
-                {diasSemana.map((dia, index) => (
-                  <div key={index} className="col border-end p-2 text-center fw-bold bg-light" style={{minHeight: '40px'}}>
-                    {dia}
-                  </div>
-                ))}
-              </div>
-
-              {/* Días del mes */}
-              <div className="row g-0">
-                {diasDelMes.map((dia, index) => {
-                  const citasDelDia = dia ? obtenerCitasDelDia(dia) : []
-                  const esHoyDia = dia ? esHoy(dia) : false
-                  const esOtroMes = dia && dia.getMonth() !== fechaActual.getMonth()
-                  
-                  return (
-                    <div
-                      key={index}
-                      className="col border-end border-bottom"
-                      style={{
-                        minHeight: '120px',
-                        backgroundColor: esHoyDia ? '#e7f3ff' : 'white'
-                      }}
-                    >
-                      {dia ? (
-                        <div className="p-2 h-100 d-flex flex-column">
-                          <div className={`d-flex justify-content-between align-items-start mb-1 ${esHoyDia ? 'fw-bold text-primary' : ''}`}>
-                            <span>{dia.getDate()}</span>
-                            {citasDelDia.length > 0 && (
-                              <span className="badge bg-primary rounded-pill">
-                                {citasDelDia.length}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex-grow-1" style={{fontSize: '11px', overflow: 'hidden'}}>
-                            {citasDelDia.slice(0, 3).map((cita) => (
-                              <div
-                                key={cita.id_cita}
-                                className="mb-1 p-1 rounded bg-primary text-white"
-                                style={{cursor: 'pointer', fontSize: '10px'}}
-                                onClick={() => abrirModalEditarCita(cita)}
-                                title={`${cita.paciente_nombres} ${cita.paciente_apellidos} - ${cita.hora_inicio?.substring(0, 5)}`}
-                              >
-                                <div className="text-truncate fw-semibold">
-                                  {cita.hora_inicio?.substring(0, 5)} {cita.paciente_nombres}
-                                </div>
-                              </div>
-                            ))}
-                            {citasDelDia.length > 3 && (
-                              <div className="text-muted small">
-                                +{citasDelDia.length - 3} más
-                              </div>
-                            )}
-                            {citasDelDia.length === 0 && (
-                              <button
-                                className="btn btn-sm btn-outline-primary w-100 mt-1"
-                                style={{fontSize: '10px', padding: '2px'}}
-                                onClick={() => abrirModalNuevaCita(dia.toISOString().split('T')[0])}
-                              >
-                                <i className="ti ti-plus"></i>
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="p-2" style={{minHeight: '120px', backgroundColor: '#f8f9fa'}}></div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+            <div className="p-4 calender-sidebar app-calendar">
+              <FullCalendarWrapper
+                initialView="dayGridMonth"
+                initialDate={normalizarFecha(fechaInicial)}
+                headerToolbar={headerToolbarConfig}
+                events={eventosCalendario}
+                eventClick={handleEventClick}
+                selectable={true}
+                selectMirror={true}
+                select={handleSelect}
+                datesSet={handleDateChange}
+                height="auto"
+                firstDay={1}
+                eventDisplay="block"
+                dayHeaderFormat={{ weekday: 'short' }}
+                moreLinkClick="popover"
+                locale="es"
+              />
             </div>
           )}
         </div>
@@ -323,4 +369,3 @@ export default function AgendaMes() {
     </HorizontalLayout>
   )
 }
-

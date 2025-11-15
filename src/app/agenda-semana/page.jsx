@@ -373,6 +373,23 @@ export default function AgendaSemana() {
     abrirModalNuevaCita(fechaSeleccionada, horaInicio)
   }, [])
 
+  const handleDateClick = useCallback((info) => {
+    // Prevenir que se abra si se hace clic en un evento existente
+    if (info.event) {
+      return
+    }
+    
+    const fechaSeleccionada = normalizarFecha(info.date)
+    
+    // Extraer la hora del click
+    const fechaHora = new Date(info.date)
+    const horas = String(fechaHora.getHours()).padStart(2, '0')
+    const minutos = String(fechaHora.getMinutes()).padStart(2, '0')
+    const horaInicio = `${horas}:${minutos}`
+    
+    abrirModalNuevaCita(fechaSeleccionada, horaInicio)
+  }, [])
+
   return (
     <HorizontalLayout>
       {/* Header */}
@@ -472,6 +489,7 @@ export default function AgendaSemana() {
                 selectable={true}
                 selectMirror={true}
                 select={handleSelect}
+                dateClick={handleDateClick}
                 datesSet={handleDateChange}
                 height="auto"
                 slotMinTime="06:00:00"

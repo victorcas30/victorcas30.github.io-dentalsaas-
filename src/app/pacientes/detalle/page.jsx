@@ -8,6 +8,7 @@ import { pacientesService } from '@/services/pacientesService'
 import { etiquetasPacienteService } from '@/services/etiquetasPacienteService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI, mostrarExito } from '@/utils/sweetAlertHelper'
+import { formatearFecha } from '@/utils/dateHelper'
 
 function DetallePacienteContent() {
   const router = useRouter()
@@ -56,15 +57,6 @@ function DetallePacienteContent() {
     }
   }
 
-  const formatearFecha = (fecha) => {
-    if (!fecha) return 'No disponible'
-    const date = new Date(fecha)
-    return date.toLocaleDateString('es-SV', { 
-      day: '2-digit', 
-      month: 'long', 
-      year: 'numeric' 
-    })
-  }
 
   const calcularEdad = (fechaNacimiento) => {
     if (!fechaNacimiento) return 'N/A'

@@ -6,13 +6,16 @@ import HorizontalLayout from '@/components/layout/HorizontalLayout'
 import CitaModal from '@/components/CitaModal'
 import FullCalendarWrapper from '@/components/FullCalendarWrapper'
 import { citasService } from '@/services/citasService'
+import { bloqueosAgendaService } from '@/services/bloqueosAgendaService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI } from '@/utils/sweetAlertHelper'
+import { normalizarFecha, parsearFechaSegura } from '@/utils/dateHelper'
 import '@/app/agenda-calendar.css'
 
 export default function AgendaMes() {
   const router = useRouter()
   const [citas, setCitas] = useState([])
+  const [bloqueos, setBloqueos] = useState([])
   const [loading, setLoading] = useState(true)
   // Inicializar con la fecha actual en formato seguro - solo se usa para initialDate
   const fechaInicial = useMemo(() => {
@@ -33,20 +36,109 @@ export default function AgendaMes() {
   // Cargar todas las citas solo al montar
   useEffect(() => {
     cargarCitas()
+    cargarBloqueos()
   }, [])
 
-  const normalizarFecha = (fecha) => {
-    if (typeof fecha === 'string') {
-      return fecha.split('T')[0]
+
+  const convertirBloqueosAEventos = useCallback((bloqueos) => {
+    if (!bloqueos || bloqueos.length === 0) {
+      return []
     }
-    if (fecha instanceof Date) {
-      const año = fecha.getFullYear()
-      const mes = String(fecha.getMonth() + 1).padStart(2, '0')
-      const dia = String(fecha.getDate()).padStart(2, '0')
-      return `${año}-${mes}-${dia}`
-    }
-    return fecha
-  }
+
+    return bloqueos.map(bloqueo => {
+      try {
+        let fechaInicio = bloqueo.fecha_inicio
+        let fechaFin = bloqueo.fecha_fin
+        if (typeof fechaInicio === 'string') {
+          fechaInicio = fechaInicio.split('T')[0].split(' ')[0]
+        }
+        if (typeof fechaFin === 'string') {
+          fechaFin = fechaFin.split('T')[0].split(' ')[0]
+        }
+
+        const obtenerNombreBloqueo = () => {
+          if (bloqueo.tipo_bloqueo === 'CLINICA') {
+            return 'BLOQUEO CLÍNICA'
+          }
+          if (bloqueo.doctor_nombres && bloqueo.doctor_apellidos) {
+            const titulo = bloqueo.doctor_titulo || 'Dr.'
+            return `BLOQUEO: ${titulo} ${bloqueo.doctor_nombres} ${bloqueo.doctor_apellidos}`
+          }
+          return 'BLOQUEO'
+        }
+
+        if (bloqueo.dia_completo) {
+          const eventos = []
+          const fechaInicioDate = parsearFechaSegura(fechaInicio)
+          const fechaFinDate = parsearFechaSegura(fechaFin)
+          
+          for (let fecha = new Date(fechaInicioDate); fecha <= fechaFinDate; fecha.setDate(fecha.getDate() + 1)) {
+            const fechaStr = normalizarFecha(fecha)
+            const fechaFinStr = normalizarFecha(new Date(fecha.getTime() + 24 * 60 * 60 * 1000))
+            
+            eventos.push({
+              id: `bloqueo-${bloqueo.id_bloqueo}-${fechaStr}`,
+              title: obtenerNombreBloqueo(),
+              start: fechaStr,
+              end: fechaFinStr,
+              allDay: true,
+              extendedProps: {
+                bloqueo: bloqueo,
+                tipo: 'bloqueo',
+                motivo: bloqueo.motivo || 'Sin motivo'
+              },
+              className: 'event-fc-color fc-bg-danger',
+              backgroundColor: 'rgba(220, 53, 69, 0.2)',
+              borderColor: '#dc3545',
+              textColor: '#dc3545',
+              display: 'background',
+              'data-tooltip': `${obtenerNombreBloqueo()}\n${fechaStr}\n${bloqueo.motivo || 'Sin motivo'}`
+            })
+          }
+          
+          return eventos
+        } else {
+          const eventos = []
+          const fechaInicioDate = parsearFechaSegura(fechaInicio)
+          const fechaFinDate = parsearFechaSegura(fechaFin)
+          
+          let horaInicio = bloqueo.hora_inicio ? bloqueo.hora_inicio.substring(0, 5) : '00:00'
+          let horaFin = bloqueo.hora_fin ? bloqueo.hora_fin.substring(0, 5) : '23:59'
+          
+          for (let fecha = new Date(fechaInicioDate); fecha <= fechaFinDate; fecha.setDate(fecha.getDate() + 1)) {
+            const fechaStr = normalizarFecha(fecha)
+            const startDateTime = `${fechaStr}T${horaInicio}:00`
+            const endDateTime = `${fechaStr}T${horaFin}:00`
+            
+            eventos.push({
+              id: `bloqueo-${bloqueo.id_bloqueo}-${fechaStr}`,
+              title: obtenerNombreBloqueo(),
+              start: startDateTime,
+              end: endDateTime,
+              allDay: false,
+              extendedProps: {
+                bloqueo: bloqueo,
+                tipo: 'bloqueo',
+                motivo: bloqueo.motivo || 'Sin motivo'
+              },
+              className: 'event-fc-color fc-bg-danger',
+              backgroundColor: 'rgba(220, 53, 69, 0.2)',
+              borderColor: '#dc3545',
+              textColor: '#dc3545',
+              'data-tooltip': `${obtenerNombreBloqueo()}\n${fechaStr} ${horaInicio} - ${horaFin}\n${bloqueo.motivo || 'Sin motivo'}`
+            })
+          }
+          
+          return eventos
+        }
+      } catch (error) {
+        console.error('Error al convertir bloqueo a evento:', error, bloqueo)
+        return null
+      }
+    })
+    .filter(evento => evento !== null)
+    .flat()
+  }, [])
 
   const convertirCitasAEventos = useCallback((citas) => {
     if (!citas || citas.length === 0) {
@@ -164,8 +256,10 @@ export default function AgendaMes() {
   }, [])
 
   const eventosCalendario = useMemo(() => {
-    return convertirCitasAEventos(citas)
-  }, [citas, convertirCitasAEventos])
+    const eventosCitas = convertirCitasAEventos(citas)
+    const eventosBloqueos = convertirBloqueosAEventos(bloqueos)
+    return [...eventosCitas, ...eventosBloqueos]
+  }, [citas, bloqueos, convertirCitasAEventos, convertirBloqueosAEventos])
 
   const headerToolbarConfig = useMemo(() => ({
     left: 'prev,next today',
@@ -203,6 +297,15 @@ export default function AgendaMes() {
     }
   }
 
+  const cargarBloqueos = async () => {
+    try {
+      const bloqueosData = await bloqueosAgendaService.listarPorClinica(idClinica)
+      setBloqueos(bloqueosData)
+    } catch (err) {
+      console.error('Error al cargar bloqueos:', err)
+    }
+  }
+
   const abrirModalNuevaCita = (fecha = null) => {
     setCitaSeleccionada(null)
     setFechaModal(fecha)
@@ -235,7 +338,9 @@ export default function AgendaMes() {
 
   const handleDateChange = useCallback((info) => {
     // Actualizar solo el título del mes sin causar re-renderizados del calendario
-    const nuevaFecha = new Date(info.start)
+    const fechaStr = normalizarFecha(info.start)
+    const nuevaFecha = parsearFechaSegura(fechaStr)
+    
     setMesTitulo(prev => {
       const prevAño = prev.getFullYear()
       const prevMes = prev.getMonth()
@@ -365,6 +470,7 @@ export default function AgendaMes() {
         cita={citaSeleccionada}
         onSave={handleGuardarCita}
         fechaInicial={fechaModal || (citaSeleccionada ? citaSeleccionada.fecha : null)}
+        bloqueos={bloqueos}
       />
     </HorizontalLayout>
   )

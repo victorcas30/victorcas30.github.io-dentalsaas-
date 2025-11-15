@@ -6,13 +6,16 @@ import HorizontalLayout from '@/components/layout/HorizontalLayout'
 import CitaModal from '@/components/CitaModal'
 import FullCalendarWrapper from '@/components/FullCalendarWrapper'
 import { citasService } from '@/services/citasService'
+import { bloqueosAgendaService } from '@/services/bloqueosAgendaService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI } from '@/utils/sweetAlertHelper'
+import { normalizarFecha, parsearFechaSegura, formatearFecha } from '@/utils/dateHelper'
 import '@/app/agenda-calendar.css'
 
 export default function AgendaDia() {
   const router = useRouter()
   const [citas, setCitas] = useState([])
+  const [bloqueos, setBloqueos] = useState([])
   const [loading, setLoading] = useState(true)
   const [fechaActual, setFechaActual] = useState(new Date())
   const [showModal, setShowModal] = useState(false)
@@ -24,20 +27,116 @@ export default function AgendaDia() {
 
   useEffect(() => {
     cargarCitas()
+    cargarBloqueos()
   }, [fechaActual])
 
-  const normalizarFecha = (fecha) => {
-    if (typeof fecha === 'string') {
-      return fecha.split('T')[0]
+
+  const convertirBloqueosAEventos = useCallback((bloqueos) => {
+    if (!bloqueos || bloqueos.length === 0) {
+      return []
     }
-    if (fecha instanceof Date) {
-      const año = fecha.getFullYear()
-      const mes = String(fecha.getMonth() + 1).padStart(2, '0')
-      const dia = String(fecha.getDate()).padStart(2, '0')
-      return `${año}-${mes}-${dia}`
-    }
-    return fecha
-  }
+
+    return bloqueos.map(bloqueo => {
+      try {
+        // Extraer solo la fecha sin la hora para evitar problemas de zona horaria
+        let fechaInicio = bloqueo.fecha_inicio
+        let fechaFin = bloqueo.fecha_fin
+        if (typeof fechaInicio === 'string') {
+          fechaInicio = fechaInicio.split('T')[0].split(' ')[0]
+        }
+        if (typeof fechaFin === 'string') {
+          fechaFin = fechaFin.split('T')[0].split(' ')[0]
+        }
+
+        const obtenerNombreBloqueo = () => {
+          if (bloqueo.tipo_bloqueo === 'CLINICA') {
+            return 'BLOQUEO CLÍNICA'
+          }
+          if (bloqueo.doctor_nombres && bloqueo.doctor_apellidos) {
+            const titulo = bloqueo.doctor_titulo || 'Dr.'
+            return `BLOQUEO: ${titulo} ${bloqueo.doctor_nombres} ${bloqueo.doctor_apellidos}`
+          }
+          return 'BLOQUEO'
+        }
+
+        // Si es día completo, crear evento para todo el día
+        if (bloqueo.dia_completo) {
+          // Para bloqueos de día completo, crear un evento por cada día en el rango
+          const eventos = []
+          const fechaInicioDate = parsearFechaSegura(fechaInicio)
+          const fechaFinDate = parsearFechaSegura(fechaFin)
+          
+          for (let fecha = new Date(fechaInicioDate); fecha <= fechaFinDate; fecha.setDate(fecha.getDate() + 1)) {
+            const fechaStr = normalizarFecha(fecha)
+            // Para allDay, FullCalendar necesita que end sea el día siguiente
+            const fechaFinStr = normalizarFecha(new Date(fecha.getTime() + 24 * 60 * 60 * 1000))
+            
+            eventos.push({
+              id: `bloqueo-${bloqueo.id_bloqueo}-${fechaStr}`,
+              title: obtenerNombreBloqueo(),
+              start: fechaStr,
+              end: fechaFinStr,
+              allDay: true,
+              extendedProps: {
+                bloqueo: bloqueo,
+                tipo: 'bloqueo',
+                motivo: bloqueo.motivo || 'Sin motivo'
+              },
+              className: 'event-fc-color fc-bg-danger',
+              backgroundColor: 'rgba(220, 53, 69, 0.2)',
+              borderColor: '#dc3545',
+              textColor: '#dc3545',
+              display: 'background',
+              'data-tooltip': `${obtenerNombreBloqueo()}\n${fechaStr}\n${bloqueo.motivo || 'Sin motivo'}`
+            })
+          }
+          
+          return eventos
+        } else {
+          // Si no es día completo, crear eventos para cada día en el rango con las horas específicas
+          const eventos = []
+          const fechaInicioDate = parsearFechaSegura(fechaInicio)
+          const fechaFinDate = parsearFechaSegura(fechaFin)
+          
+          // Normalizar horas
+          let horaInicio = bloqueo.hora_inicio ? bloqueo.hora_inicio.substring(0, 5) : '00:00'
+          let horaFin = bloqueo.hora_fin ? bloqueo.hora_fin.substring(0, 5) : '23:59'
+          
+          // Crear un evento para cada día en el rango
+          for (let fecha = new Date(fechaInicioDate); fecha <= fechaFinDate; fecha.setDate(fecha.getDate() + 1)) {
+            const fechaStr = normalizarFecha(fecha)
+            const startDateTime = `${fechaStr}T${horaInicio}:00`
+            const endDateTime = `${fechaStr}T${horaFin}:00`
+            
+            eventos.push({
+              id: `bloqueo-${bloqueo.id_bloqueo}-${fechaStr}`,
+              title: obtenerNombreBloqueo(),
+              start: startDateTime,
+              end: endDateTime,
+              allDay: false,
+              extendedProps: {
+                bloqueo: bloqueo,
+                tipo: 'bloqueo',
+                motivo: bloqueo.motivo || 'Sin motivo'
+              },
+              className: 'event-fc-color fc-bg-danger',
+              backgroundColor: 'rgba(220, 53, 69, 0.2)',
+              borderColor: '#dc3545',
+              textColor: '#dc3545',
+              'data-tooltip': `${obtenerNombreBloqueo()}\n${fechaStr} ${horaInicio} - ${horaFin}\n${bloqueo.motivo || 'Sin motivo'}`
+            })
+          }
+          
+          return eventos
+        }
+      } catch (error) {
+        console.error('Error al convertir bloqueo a evento:', error, bloqueo)
+        return null
+      }
+    })
+    .filter(evento => evento !== null)
+    .flat() // Aplanar array porque algunos bloqueos generan múltiples eventos
+  }, [])
 
   const convertirCitasAEventos = useCallback((citas) => {
     if (!citas || citas.length === 0) {
@@ -159,8 +258,10 @@ export default function AgendaDia() {
   }, [])
 
   const eventosCalendario = useMemo(() => {
-    return convertirCitasAEventos(citas)
-  }, [citas, convertirCitasAEventos])
+    const eventosCitas = convertirCitasAEventos(citas)
+    const eventosBloqueos = convertirBloqueosAEventos(bloqueos)
+    return [...eventosCitas, ...eventosBloqueos]
+  }, [citas, bloqueos, convertirCitasAEventos, convertirBloqueosAEventos])
 
   const headerToolbarConfig = useMemo(() => ({
     left: 'prev,next today',
@@ -185,6 +286,16 @@ export default function AgendaDia() {
       await mostrarErrorAPI(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const cargarBloqueos = async () => {
+    try {
+      const bloqueosData = await bloqueosAgendaService.listarPorClinica(idClinica)
+      setBloqueos(bloqueosData)
+    } catch (err) {
+      console.error('Error al cargar bloqueos:', err)
+      // No mostrar error al usuario, solo log
     }
   }
 
@@ -219,12 +330,14 @@ export default function AgendaDia() {
   }, [])
 
   const handleDateChange = useCallback((info) => {
-    const nuevaFecha = new Date(info.start)
+    // Extraer solo la fecha sin la hora para evitar problemas de zona horaria
+    const fechaStr = normalizarFecha(info.start)
+    const nuevaFecha = parsearFechaSegura(fechaStr)
+    
     // Solo actualizar si la fecha realmente cambió
     setFechaActual(prev => {
       const prevStr = normalizarFecha(prev)
-      const nuevaStr = normalizarFecha(nuevaFecha)
-      if (prevStr !== nuevaStr) {
+      if (prevStr !== fechaStr) {
         return nuevaFecha
       }
       return prev
@@ -243,14 +356,6 @@ export default function AgendaDia() {
     abrirModalNuevaCita(fechaSeleccionada, horaInicio)
   }, [])
 
-  const formatearFecha = (fecha) => {
-    return fecha.toLocaleDateString('es-SV', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    })
-  }
 
   // Cargar módulos de FullCalendar dinámicamente
 
@@ -266,7 +371,7 @@ export default function AgendaDia() {
                 Agenda - Día
               </h2>
               <p className="text-muted mb-0">
-                {formatearFecha(fechaActual)}
+                {formatearFecha(fechaActual, { formato: 'completo' })}
               </p>
             </div>
             <div className="d-flex gap-2">
@@ -364,6 +469,7 @@ export default function AgendaDia() {
         onSave={handleGuardarCita}
         fechaInicial={fechaModal || normalizarFecha(fechaActual)}
         horaInicial={horaInicialModal}
+        bloqueos={bloqueos}
       />
     </HorizontalLayout>
   )

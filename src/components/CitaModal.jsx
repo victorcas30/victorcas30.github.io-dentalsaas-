@@ -8,7 +8,7 @@ import { citasService } from '@/services/citasService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI } from '@/utils/sweetAlertHelper'
 
-export default function CitaModal({ show, onClose, cita = null, onSave, fechaInicial = null, horaInicial = null }) {
+export default function CitaModal({ show, onClose, cita = null, onSave, fechaInicial = null, horaInicial = null, bloqueos = [] }) {
   const [loading, setLoading] = useState(false)
   const [pacientes, setPacientes] = useState([])
   const [doctores, setDoctores] = useState([])
@@ -17,6 +17,7 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
   const [pacientesFiltrados, setPacientesFiltrados] = useState([])
   const [mostrarListaPacientes, setMostrarListaPacientes] = useState(false)
   const [conflictoHorario, setConflictoHorario] = useState(null)
+  const [bloqueoDetectado, setBloqueoDetectado] = useState(null)
 
   const idClinica = authService.getClinicaId()
 
@@ -132,7 +133,14 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
     } else {
       setConflictoHorario(null)
     }
-  }, [formData.fecha, formData.hora_inicio, formData.id_doctor])
+    
+    // Verificar bloqueos cuando cambian fecha, hora o doctor
+    if (formData.fecha && formData.hora_inicio && formData.hora_fin) {
+      verificarBloqueo()
+    } else {
+      setBloqueoDetectado(null)
+    }
+  }, [formData.fecha, formData.hora_inicio, formData.hora_fin, formData.id_doctor, bloqueos])
 
   const cargarDatos = async () => {
     try {
@@ -147,6 +155,107 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
     } catch (err) {
       console.error('Error al cargar datos:', err)
       await mostrarErrorAPI(err)
+    }
+  }
+
+  const verificarBloqueo = () => {
+    if (!bloqueos || bloqueos.length === 0) {
+      setBloqueoDetectado(null)
+      return
+    }
+
+    const fecha = formData.fecha
+    const horaInicio = formData.hora_inicio
+    const horaFin = formData.hora_fin
+    const idDoctor = formData.id_doctor ? parseInt(formData.id_doctor) : null
+
+    // Normalizar fecha
+    let fechaNormalizada = fecha
+    if (typeof fechaNormalizada === 'string' && fechaNormalizada.includes('T')) {
+      fechaNormalizada = fechaNormalizada.split('T')[0]
+    }
+
+    // Convertir horas a minutos para comparación
+    const convertirHoraAMinutos = (hora) => {
+      const [h, m] = hora.split(':').map(Number)
+      return h * 60 + m
+    }
+
+    const minutosInicio = convertirHoraAMinutos(horaInicio)
+    const minutosFin = convertirHoraAMinutos(horaFin)
+
+    // Buscar bloqueos que afecten esta fecha/hora
+    const bloqueoEncontrado = bloqueos.find(bloqueo => {
+      // Extraer fechas del bloqueo
+      let fechaInicioBloqueo = bloqueo.fecha_inicio
+      let fechaFinBloqueo = bloqueo.fecha_fin
+      if (typeof fechaInicioBloqueo === 'string') {
+        fechaInicioBloqueo = fechaInicioBloqueo.split('T')[0].split(' ')[0]
+      }
+      if (typeof fechaFinBloqueo === 'string') {
+        fechaFinBloqueo = fechaFinBloqueo.split('T')[0].split(' ')[0]
+      }
+
+      // Verificar si la fecha está en el rango del bloqueo
+      if (fechaNormalizada < fechaInicioBloqueo || fechaNormalizada > fechaFinBloqueo) {
+        return false
+      }
+
+      // Verificar tipo de bloqueo
+      if (bloqueo.tipo_bloqueo === 'CLINICA') {
+        // Bloqueo de clínica afecta a todos
+        if (bloqueo.dia_completo) {
+          return true // Todo el día está bloqueado
+        } else {
+          // Verificar si las horas se solapan
+          const horaInicioBloqueo = bloqueo.hora_inicio ? convertirHoraAMinutos(bloqueo.hora_inicio.substring(0, 5)) : 0
+          const horaFinBloqueo = bloqueo.hora_fin ? convertirHoraAMinutos(bloqueo.hora_fin.substring(0, 5)) : 1440
+          
+          // Verificar solapamiento: la cita se solapa si su inicio o fin está dentro del bloqueo
+          return (minutosInicio >= horaInicioBloqueo && minutosInicio < horaFinBloqueo) ||
+                 (minutosFin > horaInicioBloqueo && minutosFin <= horaFinBloqueo) ||
+                 (minutosInicio <= horaInicioBloqueo && minutosFin >= horaFinBloqueo)
+        }
+      } else if (bloqueo.tipo_bloqueo === 'DOCTOR' && idDoctor) {
+        // Bloqueo de doctor solo afecta a ese doctor
+        if (bloqueo.id_doctor !== idDoctor) {
+          return false
+        }
+        
+        if (bloqueo.dia_completo) {
+          return true // Todo el día está bloqueado para ese doctor
+        } else {
+          // Verificar si las horas se solapan
+          const horaInicioBloqueo = bloqueo.hora_inicio ? convertirHoraAMinutos(bloqueo.hora_inicio.substring(0, 5)) : 0
+          const horaFinBloqueo = bloqueo.hora_fin ? convertirHoraAMinutos(bloqueo.hora_fin.substring(0, 5)) : 1440
+          
+          return (minutosInicio >= horaInicioBloqueo && minutosInicio < horaFinBloqueo) ||
+                 (minutosFin > horaInicioBloqueo && minutosFin <= horaFinBloqueo) ||
+                 (minutosInicio <= horaInicioBloqueo && minutosFin >= horaFinBloqueo)
+        }
+      }
+
+      return false
+    })
+
+    if (bloqueoEncontrado) {
+      const obtenerMensajeBloqueo = () => {
+        if (bloqueoEncontrado.tipo_bloqueo === 'CLINICA') {
+          return 'La clínica está bloqueada en este horario'
+        } else {
+          const doctor = doctores.find(d => d.id_doctor === bloqueoEncontrado.id_doctor)
+          const nombreDoctor = doctor ? `${doctor.titulo || ''} ${doctor.nombres} ${doctor.apellidos}`.trim() : 'el doctor'
+          return `${nombreDoctor} está bloqueado en este horario`
+        }
+      }
+
+      setBloqueoDetectado({
+        mensaje: obtenerMensajeBloqueo(),
+        motivo: bloqueoEncontrado.motivo || 'Sin motivo especificado',
+        tipo: bloqueoEncontrado.tipo_bloqueo
+      })
+    } else {
+      setBloqueoDetectado(null)
     }
   }
 
@@ -246,6 +355,14 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
       return
     }
 
+    // Verificar bloqueo antes de guardar
+    if (bloqueoDetectado) {
+      await mostrarErrorAPI({ 
+        message: `No se puede crear/editar la cita: ${bloqueoDetectado.mensaje}. Motivo: ${bloqueoDetectado.motivo}` 
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -291,8 +408,26 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
           </div>
           <form onSubmit={handleSubmit}>
             <div className="modal-body">
+              {/* Advertencia de bloqueo */}
+              {bloqueoDetectado && (
+                <div className="alert alert-danger d-flex align-items-start gap-2 mb-3">
+                  <i className="ti ti-ban" style={{fontSize: '20px', marginTop: '2px'}}></i>
+                  <div className="flex-grow-1">
+                    <strong>Horario bloqueado:</strong> {bloqueoDetectado.mensaje}
+                    {bloqueoDetectado.motivo && (
+                      <div className="mt-1">
+                        <small><strong>Motivo:</strong> {bloqueoDetectado.motivo}</small>
+                      </div>
+                    )}
+                    <div className="mt-2">
+                      <small className="text-muted">No se puede crear o editar una cita en un horario bloqueado.</small>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Advertencia de conflicto */}
-              {conflictoHorario && (
+              {conflictoHorario && !bloqueoDetectado && (
                 <div className="alert alert-warning d-flex align-items-start gap-2 mb-3">
                   <i className="ti ti-alert-triangle" style={{fontSize: '20px', marginTop: '2px'}}></i>
                   <div className="flex-grow-1">
@@ -536,7 +671,7 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
               <button type="button" className="btn btn-secondary" onClick={onClose}>
                 Cancelar
               </button>
-              <button type="submit" className="btn btn-primary" disabled={loading}>
+              <button type="submit" className="btn btn-primary" disabled={loading || bloqueoDetectado}>
                 {loading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2"></span>

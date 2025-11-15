@@ -9,6 +9,7 @@ import { etiquetasService } from '@/services/etiquetasService'
 import { etiquetasPacienteService } from '@/services/etiquetasPacienteService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI, mostrarExito } from '@/utils/sweetAlertHelper'
+import { formatearFecha } from '@/utils/dateHelper'
 
 export default function Pacientes() {
   const router = useRouter()
@@ -272,11 +273,6 @@ export default function Pacientes() {
     return coincideBusqueda && coincideEtiqueta
   })
 
-  const formatearFecha = (fecha) => {
-    if (!fecha) return '—'
-    const date = new Date(fecha)
-    return date.toLocaleDateString('es-SV', { day: '2-digit', month: '2-digit', year: 'numeric' })
-  }
 
   return (
     <HorizontalLayout>

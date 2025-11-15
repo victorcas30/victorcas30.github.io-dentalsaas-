@@ -35,7 +35,7 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
   })
 
   const motivosRapidos = ['Limpieza', 'Dolor', 'Control', 'Urgencia']
-  const estados = ['Programada', 'Confirmada', 'En Proceso', 'Completada', 'Cancelada', 'No Asistió']
+  const estados = ['Programada', 'Confirmada', 'Cancelada', 'Atendida']
 
   useEffect(() => {
     if (show) {

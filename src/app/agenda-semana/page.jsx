@@ -85,10 +85,9 @@ export default function AgendaSemana() {
                 motivo: bloqueo.motivo || 'Sin motivo'
               },
               className: 'event-fc-color fc-bg-danger',
-              backgroundColor: 'rgba(220, 53, 69, 0.2)',
+              backgroundColor: 'rgba(220, 53, 69, 0.15)',
               borderColor: '#dc3545',
               textColor: '#dc3545',
-              display: 'background',
               'data-tooltip': `${obtenerNombreBloqueo()}\n${fechaStr}\n${bloqueo.motivo || 'Sin motivo'}`
             })
           }
@@ -119,7 +118,7 @@ export default function AgendaSemana() {
                 motivo: bloqueo.motivo || 'Sin motivo'
               },
               className: 'event-fc-color fc-bg-danger',
-              backgroundColor: 'rgba(220, 53, 69, 0.2)',
+              backgroundColor: 'rgba(220, 53, 69, 0.15)',
               borderColor: '#dc3545',
               textColor: '#dc3545',
               'data-tooltip': `${obtenerNombreBloqueo()}\n${fechaStr} ${horaInicio} - ${horaFin}\n${bloqueo.motivo || 'Sin motivo'}`
@@ -187,29 +186,17 @@ export default function AgendaSemana() {
               borderColor: '#0dcaf0',
               textColor: '#0dcaf0'
             },
-            'En Proceso': {
-              className: 'warning',
-              backgroundColor: 'rgba(255, 193, 7, 0.15)',
-              borderColor: '#ffc107',
-              textColor: '#ffc107'
-            },
-            'Completada': {
-              className: 'success',
-              backgroundColor: 'rgba(25, 135, 84, 0.15)',
-              borderColor: '#198754',
-              textColor: '#198754'
-            },
             'Cancelada': {
-              className: 'danger',
-              backgroundColor: 'rgba(220, 53, 69, 0.15)',
-              borderColor: '#dc3545',
-              textColor: '#dc3545'
-            },
-            'No Asistió': {
               className: 'secondary',
               backgroundColor: 'rgba(108, 117, 125, 0.15)',
               borderColor: '#6c757d',
               textColor: '#6c757d'
+            },
+            'Atendida': {
+              className: 'success',
+              backgroundColor: 'rgba(25, 135, 84, 0.15)',
+              borderColor: '#198754',
+              textColor: '#198754'
             }
           }
 

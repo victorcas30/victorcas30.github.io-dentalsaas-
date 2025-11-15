@@ -15,7 +15,6 @@ export default function HorizontalSidebar() {
   useEffect(() => {
     const userModulos = authService.getModulos()
     setModulos(userModulos)
-    console.log('📦 MÓDULOS:', userModulos)
   }, [])
 
   useEffect(() => {
@@ -36,21 +35,12 @@ export default function HorizontalSidebar() {
   const queueCloseMenu = (event) => {
     const currentTarget = event?.currentTarget
     const relatedTarget = event?.relatedTarget
-    const debugInfo = {
-      currentTag: currentTarget?.tagName,
-      currentDropdown: currentTarget?.dataset?.dropdown,
-      relatedTag: relatedTarget?.tagName,
-      clientX: event?.clientX,
-      clientY: event?.clientY
-    }
-    console.log('🧐 queueCloseMenu triggered', debugInfo)
 
     if (
       currentTarget instanceof Node &&
       relatedTarget instanceof Node &&
       currentTarget.contains(relatedTarget)
     ) {
-      console.log('🛑 Abort close: related target aún dentro del contenedor')
       return
     }
 
@@ -70,11 +60,6 @@ export default function HorizontalSidebar() {
             event.clientX <= dropdownRect.right + 32
 
           if (withinDropdownHorizontal) {
-            console.log('✅ Cancel close: cursor se dirige al dropdown', {
-              dropdownRect,
-              eventX: event.clientX,
-              eventY: event.clientY
-            })
             cancelCloseMenu()
             return
           }
@@ -88,7 +73,6 @@ export default function HorizontalSidebar() {
       }
 
       if (!isDropdown && event.clientY <= rect.top) {
-        console.log('✅ Cancel close: cursor regresó por la parte superior')
         return
       }
 
@@ -103,7 +87,6 @@ export default function HorizontalSidebar() {
           const isButton = relatedElement.tagName === 'BUTTON'
 
           if (isSameMenuRoot || isButton) {
-            console.log('✅ Cancel close: cursor regresó del dropdown al botón del mismo módulo')
             cancelCloseMenu()
             return
           }
@@ -111,10 +94,8 @@ export default function HorizontalSidebar() {
       }
     }
 
-    console.log('⏳ Programando cierre del submenú')
     cancelCloseMenu()
     closeTimeoutRef.current = setTimeout(() => {
-      console.log('❌ Cerrando submenú por timeout')
       setOpenMenu(null)
       closeTimeoutRef.current = null
     }, 220)
@@ -166,11 +147,9 @@ export default function HorizontalSidebar() {
             data-menu-root="true"
             onMouseEnter={() => {
               cancelCloseMenu()
-              console.log('✅ HOVER EN:', modulo.modulo)
               setOpenMenu(modulo.id_modulo)
             }}
             onMouseLeave={(event) => {
-              console.log('❌ SALIÓ DE:', modulo.modulo)
               queueCloseMenu(event)
             }}
           >

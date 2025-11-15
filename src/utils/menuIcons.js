@@ -162,19 +162,14 @@ export function getRutaIcon(nombreRuta) {
   const nombreLimpio = nombreRuta.trim()
   const nombreLower = nombreLimpio.toLowerCase()
   
-  // DEBUG: Log temporal para ver qué está llegando
-  console.log('🔍 Buscando icono para:', nombreRuta, '→', nombreLimpio, '→', nombreLower)
-  
   // Buscar coincidencia exacta
   if (RUTA_ICONS[nombreLimpio]) {
-    console.log('✅ Encontrado por coincidencia exacta:', RUTA_ICONS[nombreLimpio])
     return RUTA_ICONS[nombreLimpio]
   }
   
   // Buscar coincidencia parcial (case insensitive) - PRIORITARIO
   for (const [key, icon] of Object.entries(RUTA_ICONS)) {
     if (key.toLowerCase() === nombreLower) {
-      console.log('✅ Encontrado por case-insensitive:', key, '→', icon)
       return icon
     }
   }
@@ -216,13 +211,11 @@ export function getRutaIcon(nombreRuta) {
   
   for (const [palabra, icon] of Object.entries(palabrasClave)) {
     if (nombreLower.includes(palabra)) {
-      console.log('✅ Encontrado por palabra clave:', palabra, '→', icon)
       return icon
     }
   }
   
   // Icono por defecto
-  console.log('⚠️ No encontrado, usando icono por defecto para:', nombreRuta)
   return 'ti ti-point'
 }
 

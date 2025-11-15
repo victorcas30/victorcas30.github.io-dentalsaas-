@@ -31,7 +31,19 @@ export default function AgendaMes() {
   const [showModal, setShowModal] = useState(false)
   const [citaSeleccionada, setCitaSeleccionada] = useState(null)
   const [fechaModal, setFechaModal] = useState(null)
+  const [isMobile, setIsMobile] = useState(false)
   const idClinica = authService.getClinicaId()
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Cargar todas las citas solo al montar
   useEffect(() => {
@@ -248,11 +260,20 @@ export default function AgendaMes() {
     return [...eventosCitas, ...eventosBloqueos]
   }, [citas, bloqueos, convertirCitasAEventos, convertirBloqueosAEventos])
 
-  const headerToolbarConfig = useMemo(() => ({
-    left: 'prev,next today',
-    center: 'title',
-    right: ''
-  }), [])
+  const headerToolbarConfig = useMemo(() => {
+    if (isMobile) {
+      return {
+        left: 'prev,next',
+        center: 'title',
+        right: 'today'
+      }
+    }
+    return {
+      left: 'prev,next today',
+      center: 'title',
+      right: ''
+    }
+  }, [isMobile])
 
   const cargarCitas = async () => {
     try {
@@ -360,7 +381,7 @@ export default function AgendaMes() {
       {/* Header */}
       <div className="row">
         <div className="col-12">
-          <div className="d-flex align-items-center justify-content-between mb-4">
+          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mb-4 gap-3">
             <div>
               <h2 className="fw-bold mb-2">
                 <i className="ti ti-calendar-month me-2"></i>
@@ -370,10 +391,11 @@ export default function AgendaMes() {
                 {formatearMes()}
               </p>
             </div>
-            <div className="d-flex gap-2">
-              <button className="btn btn-outline-primary" onClick={() => abrirModalNuevaCita()}>
+            <div className="d-flex gap-2 w-100 w-md-auto">
+              <button className="btn btn-outline-primary w-100 w-md-auto" onClick={() => abrirModalNuevaCita()}>
                 <i className="ti ti-plus me-2"></i>
-                Nueva cita
+                <span className="d-none d-sm-inline">Nueva cita</span>
+                <span className="d-sm-none">Nueva</span>
               </button>
             </div>
           </div>
@@ -382,36 +404,42 @@ export default function AgendaMes() {
 
       {/* Navegación entre vistas */}
       <div className="card mb-3">
-        <div className="card-header bg-white border-bottom">
-          <ul className="nav nav-tabs card-header-tabs" role="tablist">
-            <li className="nav-item">
+        <div className="card-header bg-white border-bottom p-0">
+          <ul className="nav nav-tabs card-header-tabs flex-nowrap overflow-x-auto scrollbar-hide" role="tablist">
+            <li className="nav-item flex-shrink-0">
               <button
                 type="button"
                 className="nav-link"
                 onClick={() => router.push('/agenda-dia')}
                 role="tab"
               >
-                <i className="ti ti-calendar me-2"></i>Día
+                <i className="ti ti-calendar me-2"></i>
+                <span className="d-none d-sm-inline">Día</span>
+                <span className="d-sm-none">D</span>
               </button>
             </li>
-            <li className="nav-item">
+            <li className="nav-item flex-shrink-0">
               <button
                 type="button"
                 className="nav-link"
                 onClick={() => router.push('/agenda-semana')}
                 role="tab"
               >
-                <i className="ti ti-calendar-week me-2"></i>Semana
+                <i className="ti ti-calendar-week me-2"></i>
+                <span className="d-none d-sm-inline">Semana</span>
+                <span className="d-sm-none">S</span>
               </button>
             </li>
-            <li className="nav-item">
+            <li className="nav-item flex-shrink-0">
               <button
                 type="button"
                 className="nav-link active"
                 onClick={() => router.push('/agenda-mes')}
                 role="tab"
               >
-                <i className="ti ti-calendar-month me-2"></i>Mes
+                <i className="ti ti-calendar-month me-2"></i>
+                <span className="d-none d-sm-inline">Mes</span>
+                <span className="d-sm-none">M</span>
               </button>
             </li>
           </ul>
@@ -427,11 +455,18 @@ export default function AgendaMes() {
               <p className="mt-3 text-muted">Cargando citas...</p>
             </div>
           ) : (
-            <div className="p-4 calender-sidebar app-calendar">
+            <div className="p-2 p-md-4 calender-sidebar app-calendar">
               <FullCalendarWrapper
                 initialView="dayGridMonth"
                 initialDate={normalizarFecha(fechaInicial)}
                 headerToolbar={headerToolbarConfig}
+                titleFormat={isMobile ? { 
+                  month: 'short', 
+                  year: 'numeric' 
+                } : { 
+                  month: 'long', 
+                  year: 'numeric'
+                }}
                 events={eventosCalendario}
                 eventClick={handleEventClick}
                 selectable={true}
@@ -441,7 +476,7 @@ export default function AgendaMes() {
                 height="auto"
                 firstDay={1}
                 eventDisplay="block"
-                dayHeaderFormat={{ weekday: 'short' }}
+                dayHeaderFormat={isMobile ? { weekday: 'narrow' } : { weekday: 'short' }}
                 moreLinkClick="popover"
                 locale="es"
               />

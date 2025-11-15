@@ -386,10 +386,10 @@ export default function AgendaDia() {
 
   return (
     <HorizontalLayout>
-      {/* Header */}
-      <div className="row">
+      {/* Header Móvil - Se mantiene igual */}
+      <div className="row d-md-none">
         <div className="col-12">
-          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mb-4 gap-3">
+          <div className="d-flex flex-column align-items-start justify-content-between mb-4 gap-3">
             <div>
               <h2 className="fw-bold mb-2">
                 <i className="ti ti-calendar me-2"></i>
@@ -399,11 +399,34 @@ export default function AgendaDia() {
                 {formatearFecha(fechaActual, { formato: 'completo' })}
               </p>
             </div>
-            <div className="d-flex gap-2 w-100 w-md-auto">
-              <button className="btn btn-outline-primary w-100 w-md-auto" onClick={() => abrirModalNuevaCita()}>
+            <div className="d-flex gap-2 w-100">
+              <button className="btn btn-outline-primary w-100" onClick={() => abrirModalNuevaCita()}>
                 <i className="ti ti-plus me-2"></i>
-                <span className="d-none d-sm-inline">Nueva cita</span>
                 <span className="d-sm-none">Nueva</span>
+                <span className="d-none d-sm-inline">Nueva cita</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Header Desktop - Mejorado para PC */}
+      <div className="row d-none d-md-block">
+        <div className="col-12">
+          <div className="d-flex align-items-center justify-content-between mb-4">
+            <div className="flex-grow-1">
+              <h2 className="fw-bold mb-1">
+                <i className="ti ti-calendar me-2"></i>
+                Agenda - Día
+              </h2>
+              <p className="text-muted mb-0 fs-6">
+                {formatearFecha(fechaActual, { formato: 'completo' })}
+              </p>
+            </div>
+            <div className="d-flex gap-2 ms-3">
+              <button className="btn btn-outline-primary" onClick={() => abrirModalNuevaCita()}>
+                <i className="ti ti-plus me-2"></i>
+                Nueva cita
               </button>
             </div>
           </div>

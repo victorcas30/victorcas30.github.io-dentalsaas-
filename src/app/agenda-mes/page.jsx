@@ -26,8 +26,10 @@ export default function AgendaMes() {
   // Estado para el título del mes (no afecta al calendario)
   const [mesTitulo, setMesTitulo] = useState(() => {
     const hoy = new Date()
+    // Inicializar con el mes actual correctamente
     return new Date(hoy.getFullYear(), hoy.getMonth(), 1)
   })
+  const [isInitialized, setIsInitialized] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [citaSeleccionada, setCitaSeleccionada] = useState(null)
   const [fechaModal, setFechaModal] = useState(null)
@@ -346,23 +348,59 @@ export default function AgendaMes() {
 
   const handleDateChange = useCallback((info) => {
     // Actualizar solo el título del mes sin causar re-renderizados del calendario
-    const fechaStr = normalizarFecha(info.start)
-    const nuevaFecha = parsearFechaSegura(fechaStr)
+    // info.view.currentStart es más confiable para obtener el primer día del mes visible
+    if (!info || !info.view) return
+    
+    // Usar currentStart que es más preciso para obtener el mes visible
+    const fechaInicioVista = info.view.currentStart || info.start
+    if (!fechaInicioVista) return
+    
+    // Asegurarnos de que usamos la fecha local correctamente
+    const fechaStart = new Date(fechaInicioVista)
+    
+    // Verificar que la fecha es válida
+    if (isNaN(fechaStart.getTime())) return
+    
+    const nuevaAño = fechaStart.getFullYear()
+    const nuevaMes = fechaStart.getMonth()
+    
+    // Crear fecha del primer día del mes visible
+    const nuevoMesTitulo = new Date(nuevaAño, nuevaMes, 1)
     
     setMesTitulo(prev => {
+      // En la primera carga, verificar si el mes que obtenemos es razonable
+      if (!isInitialized) {
+        const hoy = new Date()
+        const mesActual = hoy.getMonth()
+        const añoActual = hoy.getFullYear()
+        
+        // Si el mes inicial es el mes actual y el mes que obtenemos es diferente,
+        // mantener el mes actual (es más confiable)
+        if (prev.getMonth() === mesActual && prev.getFullYear() === añoActual) {
+          if (nuevaMes !== mesActual || nuevaAño !== añoActual) {
+            // El mes que obtuvimos es diferente al actual, mantener el mes actual
+            setIsInitialized(true)
+            return prev
+          }
+        }
+        
+        // Si llegamos aquí, el mes obtenido parece correcto, actualizar
+        setIsInitialized(true)
+        return nuevoMesTitulo
+      }
+      
+      // Después de la inicialización, actualizar normalmente
       const prevAño = prev.getFullYear()
       const prevMes = prev.getMonth()
-      const nuevaAño = nuevaFecha.getFullYear()
-      const nuevaMes = nuevaFecha.getMonth()
       
-      // Solo actualizar si realmente cambió el mes/año para el título
+      // Solo actualizar si realmente cambió el mes/año
       if (prevAño !== nuevaAño || prevMes !== nuevaMes) {
-        // Crear nueva fecha sin hora para evitar problemas de zona horaria
-        return new Date(nuevaAño, nuevaMes, 1)
+        return nuevoMesTitulo
       }
+      
       return prev
     })
-  }, [])
+  }, [isInitialized])
 
   const handleSelect = useCallback((info) => {
     const fechaSeleccionada = normalizarFecha(info.start)
@@ -378,10 +416,10 @@ export default function AgendaMes() {
 
   return (
     <HorizontalLayout>
-      {/* Header */}
-      <div className="row">
+      {/* Header Móvil - Se mantiene igual */}
+      <div className="row d-md-none">
         <div className="col-12">
-          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mb-4 gap-3">
+          <div className="d-flex flex-column align-items-start justify-content-between mb-4 gap-3">
             <div>
               <h2 className="fw-bold mb-2">
                 <i className="ti ti-calendar-month me-2"></i>
@@ -391,11 +429,34 @@ export default function AgendaMes() {
                 {formatearMes()}
               </p>
             </div>
-            <div className="d-flex gap-2 w-100 w-md-auto">
-              <button className="btn btn-outline-primary w-100 w-md-auto" onClick={() => abrirModalNuevaCita()}>
+            <div className="d-flex gap-2 w-100">
+              <button className="btn btn-outline-primary w-100" onClick={() => abrirModalNuevaCita()}>
                 <i className="ti ti-plus me-2"></i>
-                <span className="d-none d-sm-inline">Nueva cita</span>
                 <span className="d-sm-none">Nueva</span>
+                <span className="d-none d-sm-inline">Nueva cita</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Header Desktop - Mejorado para PC */}
+      <div className="row d-none d-md-block">
+        <div className="col-12">
+          <div className="d-flex align-items-center justify-content-between mb-4">
+            <div className="flex-grow-1">
+              <h2 className="fw-bold mb-1">
+                <i className="ti ti-calendar-month me-2"></i>
+                Agenda - Mes
+              </h2>
+              <p className="text-muted mb-0 fs-6">
+                {formatearMes()}
+              </p>
+            </div>
+            <div className="d-flex gap-2 ms-3">
+              <button className="btn btn-outline-primary" onClick={() => abrirModalNuevaCita()}>
+                <i className="ti ti-plus me-2"></i>
+                Nueva cita
               </button>
             </div>
           </div>
@@ -458,7 +519,7 @@ export default function AgendaMes() {
             <div className="p-2 p-md-4 calender-sidebar app-calendar">
               <FullCalendarWrapper
                 initialView="dayGridMonth"
-                initialDate={normalizarFecha(fechaInicial)}
+                initialDate={fechaInicial}
                 headerToolbar={headerToolbarConfig}
                 titleFormat={isMobile ? { 
                   month: 'short', 

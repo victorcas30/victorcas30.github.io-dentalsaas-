@@ -1,4 +1,4 @@
-import API_CONFIG, { apiFetch } from '@/config/api'
+import API_CONFIG, { apiFetch, buildAppRoute } from '@/config/api'
 import { authService } from './authService'
 
 const parsearErrorAPI = async (response) => {
@@ -137,6 +137,64 @@ export const citasService = {
       return result
     } catch (error) {
       console.error('Error en actualizar cita:', error)
+      throw error
+    }
+  },
+
+  // Generar token de confirmación para una cita
+  async generarTokenConfirmacion(idCita) {
+    try {
+      const token = authService.getToken()
+      
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      console.log('📤 Generando token de confirmación para cita:', idCita)
+
+      const response = await apiFetch(`clinicas-citas/${idCita}/confirmacion-token`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        const error = await parsearErrorAPI(response)
+        throw error
+      }
+
+      const result = await response.json()
+      console.log('✅ Token de confirmación generado:', result)
+      
+      // Construir el link de confirmación correcto según el entorno
+      const tokenData = result.data
+      if (tokenData && tokenData.token) {
+        // Construir la URL base según el entorno
+        const isDev = process.env.NODE_ENV === 'development'
+        let baseUrl
+        
+        if (isDev) {
+          // Desarrollo: localhost
+          baseUrl = typeof window !== 'undefined' 
+            ? `${window.location.protocol}//${window.location.host}`
+            : 'http://localhost:3000'
+        } else {
+          // Producción: GitHub Pages
+          baseUrl = 'https://victorcas30.github.io'
+        }
+        
+        // Construir el path completo con basePath
+        const confirmPath = buildAppRoute('/confirmar-cita')
+        const linkConfirmacion = `${baseUrl}${confirmPath}?token=${tokenData.token}`
+        
+        // Reemplazar el link_confirmacion con el correcto
+        tokenData.link_confirmacion = linkConfirmacion
+      }
+      
+      return tokenData
+    } catch (error) {
+      console.error('Error en generarTokenConfirmacion:', error)
       throw error
     }
   }

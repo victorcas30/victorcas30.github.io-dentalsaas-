@@ -6,7 +6,9 @@ import { doctoresService } from '@/services/doctoresService'
 import { salasService } from '@/services/salasService'
 import { citasService } from '@/services/citasService'
 import { authService } from '@/services/authService'
-import { mostrarErrorAPI } from '@/utils/sweetAlertHelper'
+import { mostrarErrorAPI, mostrarInfo } from '@/utils/sweetAlertHelper'
+import { generarUrlWhatsAppConfirmacion } from '@/utils/whatsappHelper'
+import Swal from 'sweetalert2'
 
 export default function CitaModal({ show, onClose, cita = null, onSave, fechaInicial = null, horaInicial = null, bloqueos = [] }) {
   const [loading, setLoading] = useState(false)
@@ -337,6 +339,137 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
     setConflictoHorario(null)
   }
 
+  const handleEnviarConfirmacion = async () => {
+    if (!cita || !cita.id_cita) {
+      await mostrarErrorAPI({ message: 'No hay una cita seleccionada' })
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      // Generar token de confirmación
+      const tokenData = await citasService.generarTokenConfirmacion(cita.id_cita)
+      const linkConfirmacion = tokenData.link_confirmacion
+      
+      // Obtener datos completos de la cita con información del paciente
+      const citaCompleta = await citasService.obtenerPorId(cita.id_cita, idClinica)
+      
+      // Verificar si el paciente tiene número de WhatsApp
+      if (citaCompleta.paciente_celular_whatsapp) {
+        try {
+          // Generar URL de WhatsApp
+          const urlWhatsApp = generarUrlWhatsAppConfirmacion(citaCompleta, linkConfirmacion)
+          
+          // Mostrar modal con la URL de WhatsApp
+          await Swal.fire({
+            icon: 'success',
+            title: '¡Link de confirmación generado!',
+            html: `
+              <div style="text-align: left;">
+                <p style="margin-bottom: 15px;">Se ha generado el link de confirmación para esta cita.</p>
+                <p style="margin-bottom: 10px;"><strong>URL de WhatsApp para enviar al paciente:</strong></p>
+                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px; word-break: break-all;">
+                  <code style="font-size: 12px;">${urlWhatsApp}</code>
+                </div>
+                <p style="font-size: 12px; color: #6c757d; margin-bottom: 0;">
+                  Puedes copiar esta URL y enviarla al paciente por WhatsApp, o hacer clic en el botón para abrir WhatsApp directamente.
+                </p>
+              </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Abrir WhatsApp',
+            cancelButtonText: 'Cerrar',
+            confirmButtonColor: '#25D366',
+            cancelButtonColor: '#6c757d',
+            customClass: {
+              popup: 'animated fadeInDown'
+            },
+            didOpen: () => {
+              // Agregar botón para copiar URL
+              const swalContent = Swal.getHtmlContainer()
+              if (swalContent) {
+                const copyButton = document.createElement('button')
+                copyButton.className = 'btn btn-sm btn-outline-primary mt-2'
+                copyButton.innerHTML = '<i class="ti ti-copy me-1"></i> Copiar URL'
+                copyButton.onclick = async () => {
+                  try {
+                    await navigator.clipboard.writeText(urlWhatsApp)
+                    await Swal.fire({
+                      icon: 'success',
+                      title: '¡Copiado!',
+                      text: 'La URL ha sido copiada al portapapeles',
+                      timer: 2000,
+                      showConfirmButton: false,
+                      customClass: {
+                        popup: 'animated fadeInDown'
+                      }
+                    })
+                  } catch (err) {
+                    console.error('Error al copiar:', err)
+                  }
+                }
+                swalContent.appendChild(copyButton)
+              }
+            }
+          }).then((result) => {
+            if (result.isConfirmed) {
+              // Abrir WhatsApp en nueva pestaña
+              window.open(urlWhatsApp, '_blank')
+            }
+          })
+        } catch (errorWhatsApp) {
+          console.error('Error al generar URL de WhatsApp:', errorWhatsApp)
+          // Si falla la generación de WhatsApp, mostrar solo el link de confirmación
+          await Swal.fire({
+            icon: 'success',
+            title: '¡Link de confirmación generado!',
+            html: `
+              <div style="text-align: left;">
+                <p style="margin-bottom: 15px;">Se ha generado el link de confirmación para esta cita.</p>
+                <p style="margin-bottom: 10px;"><strong>Link de confirmación:</strong></p>
+                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px; word-break: break-all;">
+                  <code style="font-size: 12px;">${linkConfirmacion}</code>
+                </div>
+              </div>
+            `,
+            confirmButtonText: 'Cerrar',
+            confirmButtonColor: '#0d6efd',
+            customClass: {
+              popup: 'animated fadeInDown'
+            }
+          })
+        }
+      } else {
+        // El paciente no tiene número de WhatsApp, mostrar solo el link de confirmación
+        await Swal.fire({
+          icon: 'success',
+          title: '¡Link de confirmación generado!',
+          html: `
+            <div style="text-align: left;">
+              <p style="margin-bottom: 15px;">Se ha generado el link de confirmación para esta cita.</p>
+              <p style="margin-bottom: 10px; color: #ffc107;"><strong>⚠️ Nota:</strong> El paciente no tiene número de WhatsApp registrado.</p>
+              <p style="margin-bottom: 10px;"><strong>Link de confirmación:</strong></p>
+              <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px; word-break: break-all;">
+                <code style="font-size: 12px;">${linkConfirmacion}</code>
+              </div>
+            </div>
+          `,
+          confirmButtonText: 'Cerrar',
+          confirmButtonColor: '#0d6efd',
+          customClass: {
+            popup: 'animated fadeInDown'
+          }
+        })
+      }
+    } catch (errorToken) {
+      console.error('Error al generar token de confirmación:', errorToken)
+      await mostrarErrorAPI(errorToken)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -379,12 +512,14 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
 
       if (cita) {
         await citasService.actualizar(cita.id_cita, idClinica, datosEnviar)
+        onSave()
+        onClose()
       } else {
+        // Crear nueva cita
         await citasService.crear(datosEnviar)
+        onSave()
+        onClose()
       }
-
-      onSave()
-      onClose()
     } catch (err) {
       console.error('Error al guardar cita:', err)
       await mostrarErrorAPI(err)
@@ -668,6 +803,17 @@ export default function CitaModal({ show, onClose, cita = null, onSave, fechaIni
               </div>
             </div>
             <div className="modal-footer">
+              {cita && (
+                <button 
+                  type="button" 
+                  className="btn btn-success me-auto" 
+                  onClick={handleEnviarConfirmacion}
+                  disabled={loading}
+                >
+                  <i className="ti ti-brand-whatsapp me-2"></i>
+                  Enviar confirmación
+                </button>
+              )}
               <button type="button" className="btn btn-secondary" onClick={onClose}>
                 Cancelar
               </button>

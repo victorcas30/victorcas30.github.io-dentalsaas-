@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { buildUrl } from '@/config/api'
 import { formatearFecha } from '@/utils/dateHelper'
 import Swal from 'sweetalert2'
 
-export default function ConfirmarCita() {
+function ConfirmarCitaContent() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
   
@@ -472,6 +472,23 @@ export default function ConfirmarCita() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ConfirmarCita() {
+  return (
+    <Suspense fallback={
+      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+        <div className="text-center">
+          <div className="spinner-border text-primary" style={{width: '3rem', height: '3rem'}} role="status">
+            <span className="visually-hidden">Cargando...</span>
+          </div>
+          <p className="mt-3 text-muted">Cargando información de la cita...</p>
+        </div>
+      </div>
+    }>
+      <ConfirmarCitaContent />
+    </Suspense>
   )
 }
 

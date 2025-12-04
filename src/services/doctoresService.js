@@ -200,6 +200,39 @@ export const doctoresService = {
       console.error('Error en eliminar:', error)
       throw error
     }
+  },
+
+  // Crear usuario para un doctor
+  async crearUsuario(idDoctor, idClinica, datosUsuario) {
+    try {
+      const token = authService.getToken()
+      
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      console.log('📤 Creando usuario para doctor:', idDoctor, datosUsuario)
+
+      const response = await apiFetch(`doctores/${idDoctor}/clinica/${idClinica}/usuario`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(datosUsuario)
+      })
+
+      if (!response.ok) {
+        const error = await parsearErrorAPI(response)
+        throw error
+      }
+
+      const result = await response.json()
+      console.log('✅ Usuario creado para doctor:', result)
+      return result
+    } catch (error) {
+      console.error('Error en crearUsuario:', error)
+      throw error
+    }
   }
 }
 

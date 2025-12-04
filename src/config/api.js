@@ -73,6 +73,30 @@ export const buildAssetPath = (assetPath) => {
   return `${cleanBasePath}${cleanPath}`
 }
 
+// Helper para construir URL completa del frontend (con protocolo y dominio)
+export const buildFrontendUrl = (path) => {
+  if (typeof window === 'undefined') {
+    // En el servidor, usar variable de entorno o valores por defecto
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+    const isDev = process.env.NODE_ENV === 'development'
+    const origin = isDev 
+      ? 'http://localhost:3000'
+      : 'https://victorcas30.github.io'
+    
+    const cleanPath = path.startsWith('/') ? path : `/${path}`
+    const cleanBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+    
+    return `${origin}${cleanBasePath}${cleanPath}`
+  }
+  
+  // En el cliente, usar window.location.origin
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+  const cleanBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+  
+  return `${window.location.origin}${cleanBasePath}${cleanPath}`
+}
+
 // Helper para refrescar el token
 const refreshAccessToken = async () => {
   try {

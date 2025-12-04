@@ -7,6 +7,7 @@ import ConfirmModal from '@/components/ConfirmModal'
 import { pacientesService } from '@/services/pacientesService'
 import { etiquetasService } from '@/services/etiquetasService'
 import { etiquetasPacienteService } from '@/services/etiquetasPacienteService'
+import { completarDatosService } from '@/services/completarDatosService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI, mostrarExito } from '@/utils/sweetAlertHelper'
 import { formatearFecha } from '@/utils/dateHelper'
@@ -24,6 +25,11 @@ export default function Pacientes() {
   const [pacienteToDelete, setPacienteToDelete] = useState(null)
   const [loadingEtiqueta, setLoadingEtiqueta] = useState(null)
   const [etiquetasPaciente, setEtiquetasPaciente] = useState([]) // Etiquetas del paciente con estado asignada
+  const [showModalGenerarToken, setShowModalGenerarToken] = useState(false)
+  const [pacienteParaToken, setPacienteParaToken] = useState(null)
+  const [loadingToken, setLoadingToken] = useState(false)
+  const [idCita, setIdCita] = useState('')
+  const [tokenGenerado, setTokenGenerado] = useState(null)
   
   // Filtros
   const [busqueda, setBusqueda] = useState('')
@@ -260,6 +266,51 @@ export default function Pacientes() {
     router.push(`/pacientes/detalle?id=${idPaciente}`)
   }
 
+  const abrirModalGenerarToken = (paciente) => {
+    setPacienteParaToken(paciente)
+    setShowModalGenerarToken(true)
+    setIdCita('')
+    setTokenGenerado(null)
+  }
+
+  const cerrarModalGenerarToken = () => {
+    setShowModalGenerarToken(false)
+    setPacienteParaToken(null)
+    setIdCita('')
+    setTokenGenerado(null)
+  }
+
+  const generarToken = async () => {
+    if (!idCita || !idCita.trim()) {
+      await mostrarErrorAPI({ message: 'Por favor ingrese el ID de la cita' })
+      return
+    }
+
+    try {
+      setLoadingToken(true)
+      const data = await completarDatosService.generarTokenDesdeCita(parseInt(idCita))
+      setTokenGenerado(data)
+      await mostrarExito('Token generado exitosamente')
+    } catch (err) {
+      console.error('Error al generar token:', err)
+      await mostrarErrorAPI(err)
+    } finally {
+      setLoadingToken(false)
+    }
+  }
+
+  const copiarLink = async () => {
+    if (tokenGenerado?.link_completar_datos) {
+      try {
+        await navigator.clipboard.writeText(tokenGenerado.link_completar_datos)
+        await mostrarExito('Link copiado al portapapeles')
+      } catch (err) {
+        console.error('Error al copiar:', err)
+        await mostrarErrorAPI({ message: 'No se pudo copiar el link' })
+      }
+    }
+  }
+
   const pacientesFiltrados = pacientes.filter(paciente => {
     const coincideBusqueda = busqueda === '' || 
       paciente.nombres?.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -408,6 +459,13 @@ export default function Pacientes() {
                       </td>
                       <td className="text-end">
                         <div className="btn-group" role="group">
+                          <button 
+                            className="btn btn-sm btn-outline-success"
+                            onClick={() => abrirModalGenerarToken(paciente)}
+                            title="Generar link completar datos"
+                          >
+                            <i className="ti ti-link"></i>
+                          </button>
                           <button 
                             className="btn btn-sm btn-outline-primary"
                             onClick={() => abrirModalEditar(paciente)}
@@ -706,6 +764,128 @@ export default function Pacientes() {
         confirmColor="danger"
         icon="ti ti-alert-triangle"
       />
+
+      {/* Modal Generar Token */}
+      {showModalGenerarToken && pacienteParaToken && (
+        <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050}}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className="ti ti-link me-2"></i>
+                  Generar Link para Completar Datos
+                </h5>
+                <button type="button" className="btn-close" onClick={cerrarModalGenerarToken}></button>
+              </div>
+              <div className="modal-body">
+                {!tokenGenerado ? (
+                  <>
+                    <p className="text-muted mb-3">
+                      Paciente: <strong>{pacienteParaToken.nombres} {pacienteParaToken.apellidos}</strong>
+                    </p>
+                    <p className="text-muted mb-3">
+                      Ingrese el ID de la cita asociada al paciente para generar un link único que permita completar o actualizar sus datos.
+                    </p>
+                    <div className="mb-3">
+                      <label className="form-label">ID de la Cita <span className="text-danger">*</span></label>
+                      <input 
+                        type="number" 
+                        className="form-control" 
+                        value={idCita} 
+                        onChange={(e) => setIdCita(e.target.value)} 
+                        placeholder="Ej: 101"
+                        min="1"
+                      />
+                      <small className="text-muted">El ID de la cita debe ser un número válido</small>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="alert alert-success d-flex align-items-center gap-2">
+                      <i className="ti ti-check-circle" style={{fontSize: '1.5rem'}}></i>
+                      <div>
+                        <strong>Token generado exitosamente</strong>
+                        <p className="mb-0 small">El link ha sido generado y está listo para compartir con el paciente.</p>
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold">Link para Completar Datos</label>
+                      <div className="input-group">
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          value={tokenGenerado.link_completar_datos || ''} 
+                          readOnly
+                        />
+                        <button 
+                          className="btn btn-outline-primary" 
+                          type="button"
+                          onClick={copiarLink}
+                        >
+                          <i className="ti ti-copy me-1"></i>Copiar
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold">Token</label>
+                      <input 
+                        type="text" 
+                        className="form-control font-monospace small" 
+                        value={tokenGenerado.token || ''} 
+                        readOnly
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold">Expira en</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        value={tokenGenerado.expira_en ? new Date(tokenGenerado.expira_en).toLocaleString('es-ES') : ''} 
+                        readOnly
+                      />
+                    </div>
+                    <div className="alert alert-info mb-0">
+                      <i className="ti ti-info-circle me-2"></i>
+                      <small>Comparta este link con el paciente para que pueda completar o actualizar sus datos personales.</small>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="modal-footer">
+                {!tokenGenerado ? (
+                  <>
+                    <button type="button" className="btn btn-secondary" onClick={cerrarModalGenerarToken}>
+                      Cancelar
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-primary" 
+                      onClick={generarToken}
+                      disabled={loadingToken || !idCita}
+                    >
+                      {loadingToken ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2"></span>
+                          Generando...
+                        </>
+                      ) : (
+                        <>
+                          <i className="ti ti-link me-2"></i>
+                          Generar Link
+                        </>
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" className="btn btn-primary" onClick={cerrarModalGenerarToken}>
+                    Cerrar
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </HorizontalLayout>
   )
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import HorizontalLayout from '@/components/layout/HorizontalLayout'
 import ConfirmModal from '@/components/ConfirmModal'
 import { doctoresService } from '@/services/doctoresService'
+import { rolesService } from '@/services/rolesService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI, mostrarExito } from '@/utils/sweetAlertHelper'
 
@@ -17,6 +18,19 @@ export default function Doctores() {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [doctorToDelete, setDoctorToDelete] = useState(null)
   
+  // Estados para crear usuario
+  const [showModalUsuario, setShowModalUsuario] = useState(false)
+  const [doctorParaUsuario, setDoctorParaUsuario] = useState(null)
+  const [roles, setRoles] = useState([])
+  const [loadingRoles, setLoadingRoles] = useState(false)
+  const [formDataUsuario, setFormDataUsuario] = useState({
+    email: '',
+    password: '',
+    id_rol: 2,
+    telefono: '',
+    activo: true
+  })
+  
   const [formData, setFormData] = useState({
     nombres: '',
     apellidos: '',
@@ -29,6 +43,7 @@ export default function Doctores() {
 
   useEffect(() => {
     cargarDoctores()
+    cargarRoles()
   }, [])
 
   const cargarDoctores = async () => {
@@ -136,6 +151,91 @@ export default function Doctores() {
     }
   }
 
+  // ==================== FUNCIONES PARA CREAR USUARIO ====================
+
+  const cargarRoles = async () => {
+    try {
+      setLoadingRoles(true)
+      const data = await rolesService.listarPorClinica()
+      setRoles(data)
+      // Establecer el primer rol como predeterminado si existe
+      if (data.length > 0 && !formDataUsuario.id_rol) {
+        setFormDataUsuario(prev => ({ ...prev, id_rol: data[0].id_rol }))
+      }
+    } catch (err) {
+      console.error('Error al cargar roles:', err)
+      // No mostrar error al usuario, solo log
+    } finally {
+      setLoadingRoles(false)
+    }
+  }
+
+  const abrirModalCrearUsuario = (doctor) => {
+    setDoctorParaUsuario(doctor)
+    setFormDataUsuario({
+      email: doctor.email || '',
+      password: '',
+      id_rol: roles.length > 0 ? roles[0].id_rol : 2,
+      telefono: doctor.celular_whatsapp || '',
+      activo: true
+    })
+    setShowModalUsuario(true)
+  }
+
+  const cerrarModalUsuario = () => {
+    setShowModalUsuario(false)
+    setDoctorParaUsuario(null)
+    setFormDataUsuario({
+      email: '',
+      password: '',
+      id_rol: 2,
+      telefono: '',
+      activo: true
+    })
+  }
+
+  const handleInputChangeUsuario = (e) => {
+    const { name, value, type, checked } = e.target
+    
+    if (name === 'activo') {
+      setFormDataUsuario({
+        ...formDataUsuario,
+        [name]: checked
+      })
+    } else if (name === 'id_rol') {
+      setFormDataUsuario({
+        ...formDataUsuario,
+        [name]: parseInt(value)
+      })
+    } else {
+      setFormDataUsuario({
+        ...formDataUsuario,
+        [name]: value
+      })
+    }
+  }
+
+  const handleSubmitUsuario = async (e) => {
+    e.preventDefault()
+    setLoadingAction(true)
+
+    try {
+      await doctoresService.crearUsuario(
+        doctorParaUsuario.id_doctor,
+        idClinica,
+        formDataUsuario
+      )
+      await mostrarExito('Usuario creado y asociado al doctor correctamente')
+      cargarDoctores()
+      cerrarModalUsuario()
+    } catch (err) {
+      console.error('Error al crear usuario para doctor:', err)
+      await mostrarErrorAPI(err)
+    } finally {
+      setLoadingAction(false)
+    }
+  }
+
   return (
     <HorizontalLayout>
       {/* Header */}
@@ -216,6 +316,15 @@ export default function Doctores() {
                       <td>{doctor.email || '—'}</td>
                       <td className="text-end">
                         <div className="btn-group" role="group">
+                          {!doctor.id_usuario && (
+                            <button 
+                              className="btn btn-sm btn-outline-success"
+                              onClick={() => abrirModalCrearUsuario(doctor)}
+                              title="Crear Usuario"
+                            >
+                              <i className="ti ti-user-plus"></i>
+                            </button>
+                          )}
                           <button 
                             className="btn btn-sm btn-outline-primary"
                             onClick={() => abrirModalEditar(doctor)}
@@ -376,6 +485,140 @@ export default function Doctores() {
         confirmColor="danger"
         icon="ti ti-alert-triangle"
       />
+
+      {/* Modal Crear Usuario para Doctor */}
+      {showModalUsuario && doctorParaUsuario && (
+        <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055}}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className="ti ti-user-plus me-2"></i>
+                  Crear Usuario para Doctor
+                </h5>
+                <button type="button" className="btn-close" onClick={cerrarModalUsuario}></button>
+              </div>
+              <form onSubmit={handleSubmitUsuario}>
+                <div className="modal-body">
+                  <div className="alert alert-info mb-3">
+                    <i className="ti ti-info-circle me-2"></i>
+                    <strong>Doctor:</strong> {doctorParaUsuario.nombre_titulo || doctorParaUsuario.nombre}
+                    <br />
+                    <small>El nombre del usuario se generará automáticamente a partir de los datos del doctor.</small>
+                  </div>
+                  
+                  <div className="row g-3">
+                    <div className="col-12">
+                      <label className="form-label">
+                        Email <span className="text-danger">*</span>
+                      </label>
+                      <input 
+                        type="email" 
+                        className="form-control" 
+                        name="email" 
+                        value={formDataUsuario.email} 
+                        onChange={handleInputChangeUsuario} 
+                        required 
+                        placeholder="jramirez@clinicadental.com"
+                      />
+                      <small className="text-muted">Debe ser único en la clínica</small>
+                    </div>
+                    
+                    <div className="col-12">
+                      <label className="form-label">
+                        Contraseña <span className="text-danger">*</span>
+                      </label>
+                      <input 
+                        type="password" 
+                        className="form-control" 
+                        name="password" 
+                        value={formDataUsuario.password} 
+                        onChange={handleInputChangeUsuario} 
+                        required 
+                        placeholder="password123"
+                        minLength={6}
+                      />
+                      <small className="text-muted">Mínimo 6 caracteres</small>
+                    </div>
+                    
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        Rol <span className="text-danger">*</span>
+                      </label>
+                      <select 
+                        className="form-select" 
+                        name="id_rol" 
+                        value={formDataUsuario.id_rol} 
+                        onChange={handleInputChangeUsuario} 
+                        required
+                        disabled={loadingRoles}
+                      >
+                        {loadingRoles ? (
+                          <option>Cargando roles...</option>
+                        ) : (
+                          roles.map(rol => (
+                            <option key={rol.id_rol} value={rol.id_rol}>
+                              {rol.nombre}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+                    
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        Teléfono
+                      </label>
+                      <input 
+                        type="tel" 
+                        className="form-control" 
+                        name="telefono" 
+                        value={formDataUsuario.telefono} 
+                        onChange={handleInputChangeUsuario} 
+                        placeholder="+50371234567"
+                      />
+                    </div>
+                    
+                    <div className="col-12">
+                      <div className="form-check form-switch">
+                        <input 
+                          className="form-check-input" 
+                          type="checkbox" 
+                          name="activo" 
+                          checked={formDataUsuario.activo} 
+                          onChange={handleInputChangeUsuario}
+                          id="activoUsuario"
+                        />
+                        <label className="form-check-label" htmlFor="activoUsuario">
+                          Usuario Activo
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={cerrarModalUsuario}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={loadingAction || loadingRoles}>
+                    {loadingAction ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2"></span>
+                        Creando...
+                      </>
+                    ) : (
+                      <>
+                        <i className="ti ti-user-plus me-2"></i>
+                        Crear Usuario
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </HorizontalLayout>
   )
 }

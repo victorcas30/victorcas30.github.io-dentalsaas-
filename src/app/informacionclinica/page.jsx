@@ -171,6 +171,22 @@ export default function InformacionClinica() {
     }
   }
 
+  const formatearFecha = (fecha) => {
+    if (!fecha) return '—'
+    try {
+      const date = new Date(fecha)
+      return date.toLocaleString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    } catch {
+      return fecha
+    }
+  }
+
   return (
     <HorizontalLayout>
       {/* Header de la página */}
@@ -183,9 +199,17 @@ export default function InformacionClinica() {
                 Información de la Clínica
               </h2>
               <p className="text-muted mb-0">
-                Toda la configuración de la clínica
+                Gestiona toda la información y configuración de tu clínica
               </p>
             </div>
+            {clinica && (
+              <div className="d-flex align-items-center gap-2">
+                <span className={`badge ${clinica.activo ? 'bg-success' : 'bg-secondary'} fs-6 px-3 py-2`}>
+                  <i className={`ti ${clinica.activo ? 'ti-check' : 'ti-x'} me-1`}></i>
+                  {clinica.activo ? 'Activa' : 'Inactiva'}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -193,213 +217,429 @@ export default function InformacionClinica() {
       {loading ? (
         <div className="row">
           <div className="col-12">
-            <div className="card">
+            <div className="card shadow-sm">
               <div className="card-body text-center py-5">
-                <div className="spinner-border text-primary"></div>
-                <p className="mt-3 text-muted">Cargando información...</p>
+                <div className="spinner-border text-primary mb-3" role="status">
+                  <span className="visually-hidden">Cargando...</span>
+                </div>
+                <p className="mt-3 text-muted mb-0">Cargando información de la clínica...</p>
               </div>
             </div>
           </div>
         </div>
-      ) : (
-        <div className="row">
-          {/* Sección Logo */}
-          <div className="col-12 col-lg-6 mb-4">
-            <div className="card">
-              <div className="card-header">
-                <h5 className="mb-0">
-                  <i className="ti ti-photo me-2"></i>
-                  Logo de la Clínica
-                </h5>
-              </div>
-              <div className="card-body">
-                <div className="text-center mb-4">
-                  {previewLogo ? (
-                    <div className="mb-3">
-                      <img 
-                        src={previewLogo} 
-                        alt="Logo de la clínica" 
-                        className="img-fluid rounded"
-                        style={{maxHeight: '200px', maxWidth: '100%', objectFit: 'contain'}}
-                      />
+      ) : clinica ? (
+        <>
+          {/* Header con Logo y Nombre */}
+          <div className="row mb-4">
+            <div className="col-12">
+              <div className="card shadow-sm border-0" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+                <div className="card-body p-4">
+                  <div className="row align-items-center">
+                    <div className="col-auto">
+                      {previewLogo ? (
+                        <div className="bg-white rounded p-3 shadow" style={{width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                          <img 
+                            src={previewLogo} 
+                            alt="Logo de la clínica" 
+                            className="img-fluid"
+                            style={{maxHeight: '100%', maxWidth: '100%', objectFit: 'contain'}}
+                          />
+                        </div>
+                      ) : (
+                        <div className="bg-white rounded p-3 shadow" style={{width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                          <i className="ti ti-building-hospital text-muted" style={{fontSize: '48px'}}></i>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="border rounded p-5 mb-3" style={{minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                      <div className="text-muted">
-                        <i className="ti ti-photo" style={{fontSize: '48px', opacity: 0.3}}></i>
-                        <p className="mt-2 mb-0">No hay logo cargado</p>
+                    <div className="col">
+                      <h3 className="text-white mb-2 fw-bold">{clinica.nombre || 'Sin nombre'}</h3>
+                      <p className="text-white-50 mb-0">
+                        <i className="ti ti-map-pin me-1"></i>
+                        {clinica.direccion || 'Sin dirección registrada'}
+                      </p>
+                      <div className="mt-2 d-flex gap-3 flex-wrap">
+                        {clinica.telefono && (
+                          <span className="text-white-50">
+                            <i className="ti ti-phone me-1"></i>
+                            {clinica.telefono}
+                          </span>
+                        )}
+                        {clinica.email && (
+                          <span className="text-white-50">
+                            <i className="ti ti-mail me-1"></i>
+                            {clinica.email}
+                          </span>
+                        )}
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
-                
-                <div className="mb-3">
-                  <label className="form-label">
-                    Seleccionar archivo de imagen
-                  </label>
-                  <input 
-                    type="file" 
-                    className="form-control" 
-                    accept="image/jpeg,image/jpg,image/png,image/webp"
-                    onChange={handleFileChange}
-                    ref={fileInputRef}
-                  />
-                  <small className="text-muted">
-                    Formatos permitidos: JPEG, PNG, WEBP. Tamaño máximo: 5MB
-                  </small>
-                </div>
-                
-                <button 
-                  className="btn btn-primary w-100"
-                  onClick={handleSubirLogo}
-                  disabled={loadingLogo || !fileInputRef.current?.files[0]}
-                >
-                  {loadingLogo ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2"></span>
-                      Subiendo...
-                    </>
-                  ) : (
-                    <>
-                      <i className="ti ti-upload me-2"></i>
-                      Subir Logo
-                    </>
-                  )}
-                </button>
               </div>
             </div>
           </div>
 
-          {/* Sección Ubicación */}
-          <div className="col-12 col-lg-6 mb-4">
-            <div className="card">
-              <div className="card-header">
-                <h5 className="mb-0">
-                  <i className="ti ti-map-pin me-2"></i>
-                  Ubicación de la Clínica
-                </h5>
+          <div className="row">
+            {/* Información de Contacto */}
+            <div className="col-12 col-lg-6 mb-4">
+              <div className="card shadow-sm h-100">
+                <div className="card-header bg-white border-bottom">
+                  <h5 className="mb-0 fw-semibold">
+                    <i className="ti ti-address-book me-2 text-primary"></i>
+                    Información de Contacto
+                  </h5>
+                </div>
+                <div className="card-body">
+                  <div className="mb-3 pb-3 border-bottom">
+                    <label className="form-label text-muted small mb-1">
+                      <i className="ti ti-building me-1"></i>
+                      Nombre de la Clínica
+                    </label>
+                    <p className="fw-semibold mb-0 fs-6">{clinica.nombre || '—'}</p>
+                  </div>
+                  
+                  <div className="mb-3 pb-3 border-bottom">
+                    <label className="form-label text-muted small mb-1">
+                      <i className="ti ti-map-pin me-1"></i>
+                      Dirección
+                    </label>
+                    <p className="mb-0">{clinica.direccion || '—'}</p>
+                  </div>
+
+                  <div className="mb-3 pb-3 border-bottom">
+                    <label className="form-label text-muted small mb-1">
+                      <i className="ti ti-phone me-1"></i>
+                      Teléfono
+                    </label>
+                    <p className="mb-0">
+                      {clinica.telefono ? (
+                        <a href={`tel:${clinica.telefono}`} className="text-decoration-none">
+                          {clinica.telefono}
+                        </a>
+                      ) : '—'}
+                    </p>
+                  </div>
+
+                  <div className="mb-0">
+                    <label className="form-label text-muted small mb-1">
+                      <i className="ti ti-mail me-1"></i>
+                      Correo Electrónico
+                    </label>
+                    <p className="mb-0">
+                      {clinica.email ? (
+                        <a href={`mailto:${clinica.email}`} className="text-decoration-none">
+                          {clinica.email}
+                        </a>
+                      ) : '—'}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="card-body">
-                <form onSubmit={handleActualizarUbicacion}>
+            </div>
+
+            {/* Logo y Branding */}
+            <div className="col-12 col-lg-6 mb-4">
+              <div className="card shadow-sm h-100">
+                <div className="card-header bg-white border-bottom">
+                  <h5 className="mb-0 fw-semibold">
+                    <i className="ti ti-photo me-2 text-primary"></i>
+                    Logo y Branding
+                  </h5>
+                </div>
+                <div className="card-body">
+                  <div className="text-center mb-4">
+                    {previewLogo ? (
+                      <div className="mb-3 p-3 bg-light rounded">
+                        <img 
+                          src={previewLogo} 
+                          alt="Logo de la clínica" 
+                          className="img-fluid rounded shadow-sm"
+                          style={{maxHeight: '180px', maxWidth: '100%', objectFit: 'contain'}}
+                        />
+                      </div>
+                    ) : (
+                      <div className="border rounded p-5 mb-3 bg-light" style={{minHeight: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                        <div className="text-muted">
+                          <i className="ti ti-photo" style={{fontSize: '48px', opacity: 0.3}}></i>
+                          <p className="mt-2 mb-0 small">No hay logo cargado</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {clinica.logo_nombre && (
+                    <div className="mb-3 pb-3 border-bottom">
+                      <label className="form-label text-muted small mb-1">
+                        <i className="ti ti-file me-1"></i>
+                        Nombre del Archivo
+                      </label>
+                      <p className="mb-0">
+                        <code className="small">{clinica.logo_nombre}</code>
+                      </p>
+                    </div>
+                  )}
+
+                  {clinica.logo_nombre_sistema && (
+                    <div className="mb-3 pb-3 border-bottom">
+                      <label className="form-label text-muted small mb-1">
+                        <i className="ti ti-file-code me-1"></i>
+                        Nombre en Sistema
+                      </label>
+                      <p className="mb-0">
+                        <code className="small">{clinica.logo_nombre_sistema}</code>
+                      </p>
+                    </div>
+                  )}
+                  
                   <div className="mb-3">
-                    <label className="form-label">
-                      Latitud <span className="text-danger">*</span>
+                    <label className="form-label small fw-semibold">
+                      <i className="ti ti-upload me-1"></i>
+                      Actualizar Logo
                     </label>
                     <input 
-                      type="number" 
-                      step="any"
-                      className="form-control" 
-                      name="latitud"
-                      value={formDataUbicacion.latitud}
-                      onChange={handleInputChangeUbicacion}
-                      placeholder="Ej: 13.6929"
-                      required
+                      type="file" 
+                      className="form-control form-control-sm" 
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handleFileChange}
+                      ref={fileInputRef}
                     />
                     <small className="text-muted">
-                      Valor entre -90 y 90
+                      Formatos: JPEG, PNG, WEBP. Máx: 5MB
                     </small>
                   </div>
                   
-                  <div className="mb-3">
-                    <label className="form-label">
-                      Longitud <span className="text-danger">*</span>
-                    </label>
-                    <input 
-                      type="number" 
-                      step="any"
-                      className="form-control" 
-                      name="longitud"
-                      value={formDataUbicacion.longitud}
-                      onChange={handleInputChangeUbicacion}
-                      placeholder="Ej: -89.2182"
-                      required
-                    />
-                    <small className="text-muted">
-                      Valor entre -180 y 180
-                    </small>
-                  </div>
-
-                  <div className="d-flex gap-2">
-                    <button 
-                      type="button"
-                      className="btn btn-outline-secondary flex-fill"
-                      onClick={obtenerUbicacionActual}
-                      title="Obtener ubicación actual del navegador"
-                    >
-                      <i className="ti ti-crosshair me-2"></i>
-                      Usar mi ubicación
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="btn btn-primary flex-fill"
-                      disabled={loadingUbicacion}
-                    >
-                      {loadingUbicacion ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-2"></span>
-                          Guardando...
-                        </>
-                      ) : (
-                        <>
-                          <i className="ti ti-check me-2"></i>
-                          Guardar Ubicación
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-
-                {clinica?.latitud && clinica?.longitud && (
-                  <div className="mt-3">
-                    <div className="alert alert-info mb-0">
-                      <i className="ti ti-info-circle me-2"></i>
-                      <strong>Ubicación actual:</strong> {clinica.latitud}, {clinica.longitud}
-                      <br />
-                      <a 
-                        href={`https://www.google.com/maps?q=${clinica.latitud},${clinica.longitud}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-decoration-none"
-                      >
-                        <i className="ti ti-external-link me-1"></i>
-                        Ver en Google Maps
-                      </a>
-                    </div>
-                  </div>
-                )}
+                  <button 
+                    className="btn btn-primary w-100"
+                    onClick={handleSubirLogo}
+                    disabled={loadingLogo || !fileInputRef.current?.files[0]}
+                  >
+                    {loadingLogo ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2"></span>
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        <i className="ti ti-upload me-2"></i>
+                        Subir Logo
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Información General */}
-          {clinica && (
-            <div className="col-12">
-              <div className="card">
-                <div className="card-header">
-                  <h5 className="mb-0">
-                    <i className="ti ti-info-circle me-2"></i>
-                    Información General
+            {/* Ubicación Geográfica */}
+            <div className="col-12 col-lg-6 mb-4">
+              <div className="card shadow-sm h-100">
+                <div className="card-header bg-white border-bottom">
+                  <h5 className="mb-0 fw-semibold">
+                    <i className="ti ti-map-pin me-2 text-primary"></i>
+                    Ubicación Geográfica
+                  </h5>
+                </div>
+                <div className="card-body">
+                  {clinica.latitud && clinica.longitud && (
+                    <div className="mb-4 p-3 bg-light rounded">
+                      <div className="d-flex align-items-center justify-content-between mb-2">
+                        <span className="text-muted small">
+                          <i className="ti ti-map me-1"></i>
+                          Coordenadas actuales:
+                        </span>
+                        <a 
+                          href={`https://www.google.com/maps?q=${clinica.latitud},${clinica.longitud}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-sm btn-outline-primary"
+                        >
+                          <i className="ti ti-external-link me-1"></i>
+                          Ver en Maps
+                        </a>
+                      </div>
+                      <div className="row">
+                        <div className="col-6">
+                          <small className="text-muted d-block">Latitud</small>
+                          <strong>{clinica.latitud}</strong>
+                        </div>
+                        <div className="col-6">
+                          <small className="text-muted d-block">Longitud</small>
+                          <strong>{clinica.longitud}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleActualizarUbicacion}>
+                    <div className="mb-3">
+                      <label className="form-label small fw-semibold">
+                        Latitud <span className="text-danger">*</span>
+                      </label>
+                      <input 
+                        type="number" 
+                        step="any"
+                        className="form-control" 
+                        name="latitud"
+                        value={formDataUbicacion.latitud}
+                        onChange={handleInputChangeUbicacion}
+                        placeholder="Ej: 13.6929"
+                        required
+                      />
+                      <small className="text-muted">Valor entre -90 y 90</small>
+                    </div>
+                    
+                    <div className="mb-3">
+                      <label className="form-label small fw-semibold">
+                        Longitud <span className="text-danger">*</span>
+                      </label>
+                      <input 
+                        type="number" 
+                        step="any"
+                        className="form-control" 
+                        name="longitud"
+                        value={formDataUbicacion.longitud}
+                        onChange={handleInputChangeUbicacion}
+                        placeholder="Ej: -89.2182"
+                        required
+                      />
+                      <small className="text-muted">Valor entre -180 y 180</small>
+                    </div>
+
+                    <div className="d-flex gap-2">
+                      <button 
+                        type="button"
+                        className="btn btn-outline-secondary flex-fill"
+                        onClick={obtenerUbicacionActual}
+                        title="Obtener ubicación actual del navegador"
+                      >
+                        <i className="ti ti-crosshair me-2"></i>
+                        Mi ubicación
+                      </button>
+                      <button 
+                        type="submit" 
+                        className="btn btn-primary flex-fill"
+                        disabled={loadingUbicacion}
+                      >
+                        {loadingUbicacion ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2"></span>
+                            Guardando...
+                          </>
+                        ) : (
+                          <>
+                            <i className="ti ti-check me-2"></i>
+                            Guardar
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            {/* Información Administrativa */}
+            <div className="col-12 col-lg-6 mb-4">
+              <div className="card shadow-sm h-100">
+                <div className="card-header bg-white border-bottom">
+                  <h5 className="mb-0 fw-semibold">
+                    <i className="ti ti-info-circle me-2 text-primary"></i>
+                    Información Administrativa
                   </h5>
                 </div>
                 <div className="card-body">
                   <div className="row">
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label text-muted">Nombre de la Clínica</label>
-                      <p className="fw-semibold mb-0">{clinica.nombre || '—'}</p>
+                    <div className="col-6 mb-3">
+                      <label className="form-label text-muted small mb-1">
+                        <i className="ti ti-hash me-1"></i>
+                        ID Clínica
+                      </label>
+                      <p className="fw-semibold mb-0">#{clinica.id_clinica}</p>
                     </div>
-                    {clinica.logo_nombre && (
-                      <div className="col-md-6 mb-3">
-                        <label className="form-label text-muted">Logo Actual</label>
-                        <p className="mb-0">
-                          <code>{clinica.logo_nombre}</code>
-                        </p>
+                    
+                    <div className="col-6 mb-3">
+                      <label className="form-label text-muted small mb-1">
+                        <i className="ti ti-toggle-left me-1"></i>
+                        Estado
+                      </label>
+                      <div>
+                        <span className={`badge ${clinica.activo ? 'bg-success' : 'bg-secondary'}`}>
+                          {clinica.activo ? 'Activa' : 'Inactiva'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {clinica.id_departamento && (
+                      <div className="col-6 mb-3">
+                        <label className="form-label text-muted small mb-1">
+                          <i className="ti ti-map me-1"></i>
+                          ID Departamento
+                        </label>
+                        <p className="mb-0">{clinica.id_departamento}</p>
+                      </div>
+                    )}
+
+                    {clinica.id_municipio && (
+                      <div className="col-6 mb-3">
+                        <label className="form-label text-muted small mb-1">
+                          <i className="ti ti-map-2 me-1"></i>
+                          ID Municipio
+                        </label>
+                        <p className="mb-0">{clinica.id_municipio}</p>
+                      </div>
+                    )}
+
+                    {clinica.id_distrito && (
+                      <div className="col-6 mb-3">
+                        <label className="form-label text-muted small mb-1">
+                          <i className="ti ti-map-pin me-1"></i>
+                          ID Distrito
+                        </label>
+                        <p className="mb-0">{clinica.id_distrito}</p>
                       </div>
                     )}
                   </div>
+
+                  <hr className="my-3" />
+
+                  <div className="mb-2">
+                    <label className="form-label text-muted small mb-1">
+                      <i className="ti ti-calendar-plus me-1"></i>
+                      Fecha de Creación
+                    </label>
+                    <p className="mb-0 small">{formatearFecha(clinica.created_at)}</p>
+                  </div>
+
+                  <div className="mb-2">
+                    <label className="form-label text-muted small mb-1">
+                      <i className="ti ti-calendar-edit me-1"></i>
+                      Última Actualización
+                    </label>
+                    <p className="mb-0 small">{formatearFecha(clinica.updated_at)}</p>
+                  </div>
+
+                  {clinica.updated_by && (
+                    <div className="mb-0">
+                      <label className="form-label text-muted small mb-1">
+                        <i className="ti ti-user-edit me-1"></i>
+                        Actualizado por
+                      </label>
+                      <p className="mb-0 small">Usuario ID: {clinica.updated_by}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        </>
+      ) : (
+        <div className="row">
+          <div className="col-12">
+            <div className="card shadow-sm">
+              <div className="card-body text-center py-5">
+                <i className="ti ti-alert-circle text-warning" style={{fontSize: '48px'}}></i>
+                <p className="mt-3 text-muted mb-0">No se pudo cargar la información de la clínica</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </HorizontalLayout>

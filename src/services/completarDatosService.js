@@ -65,6 +65,54 @@ export const completarDatosService = {
     }
   },
 
+  // Generar token para completar datos desde un paciente (por ID de paciente)
+  async generarTokenDesdePaciente(idPaciente) {
+    try {
+      const token = authService.getToken()
+      
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await fetch(buildUrl(`pacientes-completar-datos/generar-token/paciente/${idPaciente}`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        const error = await parsearErrorAPI(response)
+        throw error
+      }
+
+      const result = await response.json()
+      const data = result.data
+      
+      // Reemplazar la URL del backend con la URL correcta del frontend
+      if (data && data.link_completar_datos) {
+        // Extraer el token de la URL que viene del backend
+        try {
+          const urlBackend = new URL(data.link_completar_datos)
+          const tokenParam = urlBackend.searchParams.get('token')
+          
+          if (tokenParam) {
+            // Construir la URL correcta usando buildFrontendUrl
+            data.link_completar_datos = buildFrontendUrl(`/completar-datos/?token=${tokenParam}`)
+          }
+        } catch (e) {
+          console.warn('No se pudo parsear la URL del backend, usando la original:', e)
+        }
+      }
+      
+      return data
+    } catch (error) {
+      console.error('Error en generarTokenDesdePaciente:', error)
+      throw error
+    }
+  },
+
   // Obtener información del paciente y clínica por token (público)
   async obtenerDatosPorToken(token) {
     try {

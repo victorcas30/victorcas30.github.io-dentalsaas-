@@ -11,6 +11,8 @@ import { completarDatosService } from '@/services/completarDatosService'
 import { authService } from '@/services/authService'
 import { mostrarErrorAPI, mostrarExito } from '@/utils/sweetAlertHelper'
 import { formatearFecha } from '@/utils/dateHelper'
+import { generarUrlWhatsAppCompletarDatos } from '@/utils/whatsappHelper'
+import Swal from 'sweetalert2'
 
 export default function Pacientes() {
   const router = useRouter()
@@ -28,7 +30,6 @@ export default function Pacientes() {
   const [showModalGenerarToken, setShowModalGenerarToken] = useState(false)
   const [pacienteParaToken, setPacienteParaToken] = useState(null)
   const [loadingToken, setLoadingToken] = useState(false)
-  const [idCita, setIdCita] = useState('')
   const [tokenGenerado, setTokenGenerado] = useState(null)
   
   // Filtros
@@ -269,28 +270,33 @@ export default function Pacientes() {
   const abrirModalGenerarToken = (paciente) => {
     setPacienteParaToken(paciente)
     setShowModalGenerarToken(true)
-    setIdCita('')
     setTokenGenerado(null)
   }
 
   const cerrarModalGenerarToken = () => {
     setShowModalGenerarToken(false)
     setPacienteParaToken(null)
-    setIdCita('')
     setTokenGenerado(null)
   }
 
   const generarToken = async () => {
-    if (!idCita || !idCita.trim()) {
-      await mostrarErrorAPI({ message: 'Por favor ingrese el ID de la cita' })
+    if (!pacienteParaToken?.id_paciente) {
+      await mostrarErrorAPI({ message: 'No se pudo obtener el ID del paciente' })
       return
     }
 
     try {
       setLoadingToken(true)
-      const data = await completarDatosService.generarTokenDesdeCita(parseInt(idCita))
+      const data = await completarDatosService.generarTokenDesdePaciente(pacienteParaToken.id_paciente)
       setTokenGenerado(data)
-      await mostrarExito('Token generado exitosamente')
+      
+      // Si el paciente tiene WhatsApp, mostrar directamente la opción de WhatsApp
+      if (pacienteParaToken.celular_whatsapp && data?.link_completar_datos) {
+        // Pasar el link directamente para evitar problemas de timing con el estado
+        compartirPorWhatsApp(data.link_completar_datos)
+      } else {
+        await mostrarExito('Token generado exitosamente')
+      }
     } catch (err) {
       console.error('Error al generar token:', err)
       await mostrarErrorAPI(err)
@@ -308,6 +314,94 @@ export default function Pacientes() {
         console.error('Error al copiar:', err)
         await mostrarErrorAPI({ message: 'No se pudo copiar el link' })
       }
+    }
+  }
+
+  const compartirPorWhatsApp = async (linkCompletarDatos = null) => {
+    // Usar el link pasado como parámetro o el del estado
+    const link = linkCompletarDatos || tokenGenerado?.link_completar_datos
+    
+    if (!link) {
+      await mostrarErrorAPI({ message: 'No hay link disponible para compartir' })
+      return
+    }
+
+    if (!pacienteParaToken?.celular_whatsapp) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Sin número de WhatsApp',
+        text: 'El paciente no tiene número de WhatsApp registrado. Puedes copiar el link y enviarlo por otro medio.',
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#0d6efd',
+        customClass: {
+          popup: 'animated fadeInDown'
+        }
+      })
+      return
+    }
+
+    try {
+      const urlWhatsApp = generarUrlWhatsAppCompletarDatos(pacienteParaToken, link)
+      
+      await Swal.fire({
+        icon: 'success',
+        title: '¡Listo para compartir!',
+        html: `
+          <div style="text-align: left;">
+            <p style="margin-bottom: 15px;">Se ha generado el link de WhatsApp para compartir con el paciente.</p>
+            <p style="margin-bottom: 10px;"><strong>URL de WhatsApp:</strong></p>
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px; word-break: break-all;">
+              <code style="font-size: 12px;">${urlWhatsApp}</code>
+            </div>
+            <p style="font-size: 12px; color: #6c757d; margin-bottom: 0;">
+              Puedes copiar esta URL y enviarla al paciente por WhatsApp, o hacer clic en el botón para abrir WhatsApp directamente.
+            </p>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Abrir WhatsApp',
+        cancelButtonText: 'Cerrar',
+        confirmButtonColor: '#25D366',
+        cancelButtonColor: '#6c757d',
+        customClass: {
+          popup: 'animated fadeInDown'
+        },
+        didOpen: () => {
+          // Agregar botón para copiar URL
+          const swalContent = Swal.getHtmlContainer()
+          if (swalContent) {
+            const copyButton = document.createElement('button')
+            copyButton.className = 'btn btn-sm btn-outline-primary mt-2'
+            copyButton.innerHTML = '<i class="ti ti-copy me-1"></i> Copiar URL'
+            copyButton.onclick = async () => {
+              try {
+                await navigator.clipboard.writeText(urlWhatsApp)
+                await Swal.fire({
+                  icon: 'success',
+                  title: '¡Copiado!',
+                  text: 'La URL ha sido copiada al portapapeles',
+                  timer: 2000,
+                  showConfirmButton: false,
+                  customClass: {
+                    popup: 'animated fadeInDown'
+                  }
+                })
+              } catch (err) {
+                console.error('Error al copiar:', err)
+              }
+            }
+            swalContent.appendChild(copyButton)
+          }
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Abrir WhatsApp en nueva pestaña
+          window.open(urlWhatsApp, '_blank')
+        }
+      })
+    } catch (error) {
+      console.error('Error al generar URL de WhatsApp:', error)
+      await mostrarErrorAPI({ message: error.message || 'No se pudo generar la URL de WhatsApp' })
     }
   }
 
@@ -784,19 +878,11 @@ export default function Pacientes() {
                       Paciente: <strong>{pacienteParaToken.nombres} {pacienteParaToken.apellidos}</strong>
                     </p>
                     <p className="text-muted mb-3">
-                      Ingrese el ID de la cita asociada al paciente para generar un link único que permita completar o actualizar sus datos.
+                      Se generará un link único que permitirá al paciente completar o actualizar sus datos personales en cualquier momento.
                     </p>
-                    <div className="mb-3">
-                      <label className="form-label">ID de la Cita <span className="text-danger">*</span></label>
-                      <input 
-                        type="number" 
-                        className="form-control" 
-                        value={idCita} 
-                        onChange={(e) => setIdCita(e.target.value)} 
-                        placeholder="Ej: 101"
-                        min="1"
-                      />
-                      <small className="text-muted">El ID de la cita debe ser un número válido</small>
+                    <div className="alert alert-info mb-0">
+                      <i className="ti ti-info-circle me-2"></i>
+                      <small>El token generado invalidará cualquier token anterior del mismo paciente.</small>
                     </div>
                   </>
                 ) : (
@@ -808,46 +894,87 @@ export default function Pacientes() {
                         <p className="mb-0 small">El link ha sido generado y está listo para compartir con el paciente.</p>
                       </div>
                     </div>
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Link para Completar Datos</label>
-                      <div className="input-group">
-                        <input 
-                          type="text" 
-                          className="form-control" 
-                          value={tokenGenerado.link_completar_datos || ''} 
-                          readOnly
-                        />
-                        <button 
-                          className="btn btn-outline-primary" 
-                          type="button"
-                          onClick={copiarLink}
-                        >
-                          <i className="ti ti-copy me-1"></i>Copiar
-                        </button>
-                      </div>
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Token</label>
-                      <input 
-                        type="text" 
-                        className="form-control font-monospace small" 
-                        value={tokenGenerado.token || ''} 
-                        readOnly
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">Expira en</label>
-                      <input 
-                        type="text" 
-                        className="form-control" 
-                        value={tokenGenerado.expira_en ? new Date(tokenGenerado.expira_en).toLocaleString('es-ES') : ''} 
-                        readOnly
-                      />
-                    </div>
-                    <div className="alert alert-info mb-0">
-                      <i className="ti ti-info-circle me-2"></i>
-                      <small>Comparta este link con el paciente para que pueda completar o actualizar sus datos personales.</small>
-                    </div>
+                    
+                    {pacienteParaToken?.celular_whatsapp ? (
+                      <>
+                        <div className="mb-3">
+                          <button
+                            className="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2"
+                            onClick={compartirPorWhatsApp}
+                            style={{
+                              padding: '0.75rem',
+                              fontSize: '1.1rem',
+                              fontWeight: '600'
+                            }}
+                          >
+                            <i className="ti ti-brand-whatsapp" style={{fontSize: '1.5rem'}}></i>
+                            Compartir por WhatsApp
+                          </button>
+                        </div>
+                        <div className="text-center mb-3">
+                          <button
+                            type="button"
+                            className="btn btn-link text-muted p-0"
+                            onClick={() => {
+                              const details = document.getElementById('link-details')
+                              if (details) {
+                                details.style.display = details.style.display === 'none' ? 'block' : 'none'
+                              }
+                            }}
+                          >
+                            <small>
+                              <i className="ti ti-chevron-down me-1"></i>
+                              Ver detalles del link
+                            </small>
+                          </button>
+                        </div>
+                        <div id="link-details" style={{display: 'none'}}>
+                          <div className="mb-3">
+                            <label className="form-label fw-semibold">Link para Completar Datos</label>
+                            <div className="input-group">
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                value={tokenGenerado.link_completar_datos || ''} 
+                                readOnly
+                              />
+                              <button 
+                                className="btn btn-outline-primary" 
+                                type="button"
+                                onClick={copiarLink}
+                              >
+                                <i className="ti ti-copy me-1"></i>Copiar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="mb-3">
+                          <label className="form-label fw-semibold">Link para Completar Datos</label>
+                          <div className="input-group">
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              value={tokenGenerado.link_completar_datos || ''} 
+                              readOnly
+                            />
+                            <button 
+                              className="btn btn-outline-primary" 
+                              type="button"
+                              onClick={copiarLink}
+                            >
+                              <i className="ti ti-copy me-1"></i>Copiar
+                            </button>
+                          </div>
+                        </div>
+                        <div className="alert alert-warning mb-0">
+                          <i className="ti ti-alert-circle me-2"></i>
+                          <small>El paciente no tiene número de WhatsApp registrado. Puedes copiar el link y enviarlo por otro medio.</small>
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
               </div>
@@ -861,7 +988,7 @@ export default function Pacientes() {
                       type="button" 
                       className="btn btn-primary" 
                       onClick={generarToken}
-                      disabled={loadingToken || !idCita}
+                      disabled={loadingToken}
                     >
                       {loadingToken ? (
                         <>
@@ -877,9 +1004,19 @@ export default function Pacientes() {
                     </button>
                   </>
                 ) : (
-                  <button type="button" className="btn btn-primary" onClick={cerrarModalGenerarToken}>
-                    Cerrar
-                  </button>
+                  <>
+                    <button 
+                      type="button" 
+                      className="btn btn-outline-secondary" 
+                      onClick={copiarLink}
+                    >
+                      <i className="ti ti-copy me-2"></i>
+                      Copiar Link
+                    </button>
+                    <button type="button" className="btn btn-primary" onClick={cerrarModalGenerarToken}>
+                      Cerrar
+                    </button>
+                  </>
                 )}
               </div>
             </div>

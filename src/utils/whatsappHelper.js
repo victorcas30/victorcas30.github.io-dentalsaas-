@@ -109,3 +109,38 @@ export const generarUrlWhatsAppConfirmacion = (datosCita, linkConfirmacion) => {
   return generarUrlWhatsApp(datosCita.paciente_celular_whatsapp, mensaje)
 }
 
+/**
+ * Genera el mensaje de WhatsApp para completar datos del paciente
+ * @param {Object} datosPaciente - Datos del paciente
+ * @param {string} datosPaciente.nombres - Nombres del paciente
+ * @param {string} datosPaciente.apellidos - Apellidos del paciente
+ * @param {string} linkCompletarDatos - Link para completar datos
+ * @returns {string} Mensaje formateado
+ */
+export const generarMensajeWhatsAppCompletarDatos = (datosPaciente, linkCompletarDatos) => {
+  const saludo = obtenerSaludo()
+  const nombrePaciente = `${datosPaciente.nombres || ''} ${datosPaciente.apellidos || ''}`.trim()
+  
+  const mensaje = `${saludo} ${nombrePaciente ? nombrePaciente + ',\n\n' : ''}Te enviamos este link para que puedas completar o actualizar tus datos personales en nuestra clínica.\n\nHaz clic aquí para acceder:\n${linkCompletarDatos}\n\nEste link es único y personal. Si tienes alguna pregunta, no dudes en contactarnos.`
+  
+  return mensaje
+}
+
+/**
+ * Genera la URL completa de WhatsApp para completar datos del paciente
+ * @param {Object} datosPaciente - Datos del paciente
+ * @param {string} datosPaciente.celular_whatsapp - Número de WhatsApp del paciente
+ * @param {string} datosPaciente.nombres - Nombres del paciente
+ * @param {string} datosPaciente.apellidos - Apellidos del paciente
+ * @param {string} linkCompletarDatos - Link para completar datos
+ * @returns {string} URL de WhatsApp completa
+ */
+export const generarUrlWhatsAppCompletarDatos = (datosPaciente, linkCompletarDatos) => {
+  if (!datosPaciente.celular_whatsapp) {
+    throw new Error('El paciente no tiene número de WhatsApp registrado')
+  }
+  
+  const mensaje = generarMensajeWhatsAppCompletarDatos(datosPaciente, linkCompletarDatos)
+  return generarUrlWhatsApp(datosPaciente.celular_whatsapp, mensaje)
+}
+

@@ -36,8 +36,8 @@ export default function Login() {
         // Mostrar mensaje de éxito
         console.log('Login exitoso:', response)
         
-        // Redirigir al dashboard
-        router.push('/')
+        // Redirigir a la agenda
+        router.push('/agenda-semana')
       }
     } catch (err) {
       console.error('Error en login:', err)

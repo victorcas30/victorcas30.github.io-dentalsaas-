@@ -20,14 +20,47 @@ export const obtenerSaludo = () => {
 
 /**
  * Formatea una fecha para el mensaje de WhatsApp
- * @param {string} fecha - Fecha en formato YYYY-MM-DD
+ * @param {string|Date} fecha - Fecha en formato YYYY-MM-DD o ISO
  * @returns {string} Fecha formateada (ej: "20 de noviembre de 2025")
  */
 export const formatearFechaParaWhatsApp = (fecha) => {
   if (!fecha) return ''
   
   try {
-    const fechaDate = new Date(fecha + 'T12:00:00') // Agregar hora para evitar problemas de zona horaria
+    // Normalizar la fecha: extraer solo la parte YYYY-MM-DD si viene en formato ISO
+    let fechaNormalizada = fecha
+    if (typeof fecha === 'string') {
+      // Extraer solo la parte de la fecha sin la hora
+      fechaNormalizada = fecha.split('T')[0].split(' ')[0]
+    }
+    
+    // Si ya es un Date, extraer la fecha
+    if (fecha instanceof Date) {
+      const año = fecha.getFullYear()
+      const mes = String(fecha.getMonth() + 1).padStart(2, '0')
+      const dia = String(fecha.getDate()).padStart(2, '0')
+      fechaNormalizada = `${año}-${mes}-${dia}`
+    }
+    
+    // Parsear la fecha de forma segura
+    const partes = fechaNormalizada.split('-')
+    if (partes.length !== 3) {
+      console.error('Formato de fecha inválido:', fecha)
+      return fechaNormalizada
+    }
+    
+    const año = parseInt(partes[0], 10)
+    const mes = parseInt(partes[1], 10) - 1 // Los meses en JS son 0-indexed
+    const dia = parseInt(partes[2], 10)
+    
+    if (isNaN(año) || isNaN(mes) || isNaN(dia)) {
+      console.error('Fecha inválida:', fecha)
+      return fechaNormalizada
+    }
+    
+    // Crear fecha usando constructor local (evita problemas de zona horaria)
+    const fechaDate = new Date(año, mes, dia)
+    
     const opciones = {
       year: 'numeric',
       month: 'long',
@@ -35,7 +68,11 @@ export const formatearFechaParaWhatsApp = (fecha) => {
     }
     return fechaDate.toLocaleDateString('es-SV', opciones)
   } catch (error) {
-    console.error('Error al formatear fecha:', error)
+    console.error('Error al formatear fecha:', error, fecha)
+    // Intentar retornar la fecha original si es string
+    if (typeof fecha === 'string') {
+      return fecha.split('T')[0].split(' ')[0]
+    }
     return fecha
   }
 }

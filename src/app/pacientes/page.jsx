@@ -643,14 +643,13 @@ export default function Pacientes() {
                       </select>
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label">Fecha de Nacimiento <span className="text-danger">*</span></label>
+                      <label className="form-label">Fecha de Nacimiento</label>
                       <input 
                         type="date" 
                         className="form-control" 
                         name="fecha_nacimiento" 
                         value={formData.fecha_nacimiento} 
                         onChange={handleInputChange} 
-                        required 
                       />
                     </div>
                     <div className="col-md-6">

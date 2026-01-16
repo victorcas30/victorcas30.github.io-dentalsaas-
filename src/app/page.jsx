@@ -6,8 +6,10 @@ import { buildAssetPath } from '@/config/api'
 export default function Home() {
   return (
     <HorizontalLayout>
+      {/* TODO: Contenido del Dashboard - Comentado temporalmente */}
+      
       {/* Título de la página */}
-      <div className="row">
+      {/* <div className="row">
         <div className="col-12">
           <div className="d-flex align-items-center justify-content-between mb-4">
             <h2 className="mb-0">Dashboard</h2>
@@ -17,10 +19,10 @@ export default function Home() {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Tarjetas de estadísticas */}
-      <div className="row">
+      {/* <div className="row">
         <div className="col-xl-3 col-lg-6">
           <div className="card">
             <div className="card-body">
@@ -96,10 +98,10 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Próximas citas */}
-      <div className="row">
+      {/* <div className="row">
         <div className="col-lg-8">
           <div className="card">
             <div className="card-body">
@@ -160,10 +162,10 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Alertas y recordatorios */}
-        <div className="col-lg-4">
+        {/* <div className="col-lg-4">
           <div className="card">
             <div className="card-body">
               <h5 className="card-title mb-3">Alertas y Recordatorios</h5>
@@ -186,10 +188,10 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Accesos rápidos */}
-          <div className="card">
+          {/* <div className="card">
             <div className="card-body">
               <h5 className="card-title mb-3">Accesos Rápidos</h5>
               <div className="d-grid gap-2">
@@ -209,7 +211,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </HorizontalLayout>
   )
 }
